@@ -12,6 +12,8 @@ public class TerrainGenerator : MonoBehaviour
     [Header("Noise generation settings")]
     public Noise.PerlinSettings Settings;
     public AnimationCurve HeightCurve;
+    [Min(1)]
+    public int NumberOfTerraces = 6;
 
     [Space]
     public int Seed = 0;
@@ -50,7 +52,7 @@ public class TerrainGenerator : MonoBehaviour
         DateTime before = DateTime.Now;
 
         // Reset the whole HexMap
-        HexMap.ClearAll();
+        HexMap.Clear();
 
         Settings.ValidateValues();
         TileTypes.CompressBounds();
@@ -60,6 +62,7 @@ public class TerrainGenerator : MonoBehaviour
 
         float[] heights = new float[width * height];
         Vector3Int[] positions = new Vector3Int[width * height];
+        Terrain[] terrain = new Terrain[width * height];
         float min = float.MaxValue, max = float.MinValue;
 
         foreach (Vector3Int position in TileTypes.cellBounds.allPositionsWithin)
@@ -74,19 +77,23 @@ public class TerrainGenerator : MonoBehaviour
 
                 positions[index] = position;
                 heights[index] = 0.0f;
+                terrain[index] = Terrain.Water;
 
                 if (tile == Land)
                 {
                     Vector3 samplePoint = TileTypes.layoutGrid.GetCellCenterWorld(position);
                     heights[index] = Noise.Perlin(Settings, seed, new Vector2(samplePoint.x, samplePoint.z));
+                    terrain[index] = Terrain.Land;
                 }
                 else if (tile == AlwaysLand)
                 {
                     heights[index] = 0.5f;
+                    terrain[index] = Terrain.Land;
                 }
                 else if (tile == Water)
                 {
                     heights[index] = 0.0f;
+                    terrain[index] = Terrain.Water;
                 }
                 else
                 {
@@ -108,18 +115,22 @@ public class TerrainGenerator : MonoBehaviour
 
         yield return null;
 
-        // Normalise all values so that they are in range 0 - 1
         for (int i = 0; i < width * height; i++)
         {
+            // Normalise all values so that they are in range 0 - 1
             heights[i] = HeightCurve.Evaluate((heights[i] - min) / (max - min));
+
+            // Then round values so that they appear as terraces
+            heights[i] = (float)Mathf.RoundToInt(heights[i] * NumberOfTerraces) / NumberOfTerraces;
+
+            // Add the hexagon to the map
+            HexMap.AddHexagon(positions[i], heights[i], terrain[i]);
         }
 
-
         // Set all the tiles
-        HexMap.ConstructTerrainMesh(positions, heights, 0.0f, 1.0f);
         yield return null;
 
-        HexMap.Recalculate();
+        HexMap.GenerateMeshFromHexagons();
 
         TileTypes.GetComponent<TilemapRenderer>().enabled = false;
 

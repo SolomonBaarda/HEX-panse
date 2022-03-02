@@ -19,7 +19,7 @@ public class TerrainGeneratorEditor : Editor
 
         if (Application.isPlaying && GUILayout.Button("Clear"))
         {
-            t.HexMap.ClearAll();
+            t.HexMap.Clear();
         }
     }
 }

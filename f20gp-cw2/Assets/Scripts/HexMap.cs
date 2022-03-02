@@ -10,26 +10,27 @@ public class HexMap : MonoBehaviour
     public const float HexagonEdgeLength = GridSize / 2;
 
     [Header("Grid display settings")]
-    [Min(0)] public float HeightOffset = 25f * GridSize;
-    [Min(1)] public int MaxTerraces = 10;
+    [Min(0)] public float HeightOffset = 1.0f;
+    [Min(1)] public int MaxTerraces = 5;
 
     [Header("Chunk settings")]
     public Transform TerrainParent;
 
-    protected Dictionary<Vector3Int, Hexagon> Hexagons = new Dictionary<Vector3Int, Hexagon>();
+    public Dictionary<Vector3Int, Hexagon> Hexagons { get; protected set; } = new Dictionary<Vector3Int, Hexagon>();
 
     [Header("Object references")]
-    public Grid Grid;
+    private Grid Grid;
 
     [Space]
     public Material GroundMaterial;
 
     private void Awake()
     {
+        Grid = GetComponent<Grid>();
         Grid.cellSize = new Vector3(GridSize, GridSize, GridSize);
     }
 
-    public void ClearAll()
+    public void Clear()
     {
         // Destroy all the children
         for (int i = 0; i < TerrainParent.childCount; i++)
@@ -37,95 +38,50 @@ public class HexMap : MonoBehaviour
             Destroy(TerrainParent.GetChild(i).gameObject);
         }
 
-        // Clear the dictionary
         Hexagons.Clear();
     }
 
 
-    public void Recalculate()
+    public void GenerateMeshFromHexagons()
     {
-        // Recalculate each edge for all the hexagons in this chunk
-        foreach (Hexagon h in Hexagons.Values)
+        Dictionary<Vector3Int, HexagonMesh> hexMeshes = new Dictionary<Vector3Int, HexagonMesh>();
+
+        foreach (KeyValuePair<Vector3Int, Hexagon> pair in Hexagons)
         {
-            RecalculateEdges(h);
+            hexMeshes[pair.Key] = new HexagonMesh(pair.Key, transform.localToWorldMatrix, pair.Value.CentreOfFaceWorld, pair.Value.Height, pair.Value.TerrainType);
         }
 
-        // Merge all the meshes
-        MergeAllMeshes();
-    }
-
-
-    private void RecalculateEdges(Hexagon h)
-    {
-        // Get all neighbour hexagons
-        List<Hexagon> neighbours = new List<Hexagon>();
-        foreach (Vector3Int neighbourCell in Hexagon.CalculatePossibleNeighbourCells(h.Cell))
+        // Recalculate each edge for all the hexagons in this chunk
+        foreach (HexagonMesh h in hexMeshes.Values)
         {
-            // Get the valid chunk
-            if (Hexagons.ContainsKey(neighbourCell))
+            // Get all neighbour hexagons
+            List<HexagonMesh> neighbours = new List<HexagonMesh>();
+            foreach (Vector3Int neighbourCell in HexagonMesh.CalculatePossibleNeighbourCells(h.Cell))
             {
-                neighbours.Add(Hexagons[neighbourCell]);
+                // Get the valid chunk
+                if (hexMeshes.ContainsKey(neighbourCell))
+                {
+                    neighbours.Add(hexMeshes[neighbourCell]);
+                }
+
             }
 
+            // Now recalculate all the edges for this hexagon
+            h.RecalculateEdges(neighbours, transform.localToWorldMatrix);
         }
 
-        // Now recalculate all the edges for this hexagon
-        h.RecalculateEdges(neighbours, transform.localToWorldMatrix);
-    }
-
-
-    private void AddHexagon(Vector3Int worldCellPosition, float heightMultiplier)
-    {
-        // Now round the height 
-        float roundedMultiplier = (float)Mathf.RoundToInt(heightMultiplier * MaxTerraces) / MaxTerraces;
-
-        // Calculate the height
-        Vector3 worldHeight = Grid.GetCellCenterWorld(worldCellPosition) + new Vector3(0, roundedMultiplier * HeightOffset, 0);
-
-        Hexagons[worldCellPosition] = new Hexagon(worldCellPosition, transform.localToWorldMatrix, worldHeight, roundedMultiplier, Hexagon.Terrain.Land);
-    }
-
-
-    public void ConstructTerrainMesh(Vector3Int[] worldCellPositions, float[] heightMultipliers, float min, float max)
-    {
-        for (int i = 0; i < worldCellPositions.Length; i++)
-        {
-            AddHexagon(worldCellPositions[i], heightMultipliers[i]);
-        }
-    }
-
-
-
-    private static void OptimiseMesh(Mesh m)
-    {
-        // Apply all optimisations
-        m.RecalculateNormals();
-        m.RecalculateTangents();
-        m.RecalculateBounds();
-        m.Optimize();
-    }
-
-
-
-
-    /// <summary>
-    /// Merges all sub meshes and returns the number of meshes created.
-    /// </summary>
-    /// <returns></returns>
-    public int MergeAllMeshes()
-    {
         // Get all the meshes
         Dictionary<float, List<CombineInstance>> heightToMesh = new Dictionary<float, List<CombineInstance>>();
 
         // Sort the meshes by height
-        foreach (Hexagon h in Hexagons.Values)
+        foreach (HexagonMesh h in hexMeshes.Values)
         {
             // Check that the entry exists
-            if (!heightToMesh.TryGetValue(h.HeightMultiplier, out List<CombineInstance> meshes))
+            if (!heightToMesh.TryGetValue(h.Height, out List<CombineInstance> meshes))
             {
                 // Create a new list and add it as a value
                 meshes = new List<CombineInstance>();
-                heightToMesh[h.HeightMultiplier] = meshes;
+                heightToMesh[h.Height] = meshes;
             }
 
             // Add the face of the hexagon
@@ -163,11 +119,28 @@ public class HexMap : MonoBehaviour
             // Create the new mesh filter object
             allSubMeshes.Add(InstantiateMeshFilter(m, key, GroundMaterial));
         }
-
-
-
-        return allSubMeshes.Count;
     }
+
+
+    public void AddHexagon(Vector3Int cell, float height, Terrain type)
+    {
+        Vector3 centreOfFaceWorld = Grid.GetCellCenterWorld(cell) + new Vector3(0, height * HeightOffset, 0);
+        Hexagons[cell] = new Hexagon(height, centreOfFaceWorld, type);
+    }
+
+    private static void OptimiseMesh(Mesh m)
+    {
+        // Apply all optimisations
+        m.RecalculateNormals();
+        m.RecalculateTangents();
+        m.RecalculateBounds();
+        m.Optimize();
+    }
+
+
+
+
+
 
 
 
@@ -192,8 +165,22 @@ public class HexMap : MonoBehaviour
 
     public class Hexagon
     {
+        public readonly float Height;
+        public readonly Vector3 CentreOfFaceWorld;
+        public Terrain TerrainType;
+
+        public Hexagon(float height, Vector3 centreOfFaceWorld, Terrain terrain)
+        {
+            Height = height;
+            CentreOfFaceWorld = centreOfFaceWorld;
+            TerrainType = terrain;
+        }
+    }
+
+    private class HexagonMesh
+    {
         public readonly Vector3Int Cell;
-        public readonly float HeightMultiplier;
+        public readonly float Height;
         public readonly Vector3 CentreOfFaceWorld;
 
         public Mesh Face;
@@ -204,10 +191,10 @@ public class HexMap : MonoBehaviour
 
         public Terrain TerrainType;
 
-        public Hexagon(Vector3Int cell, Matrix4x4 transform, Vector3 centreOfFace, float heightMultiplier, Terrain terrainType)
+        public HexagonMesh(Vector3Int cell, Matrix4x4 transform, Vector3 centreOfFace, float heightMultiplier, Terrain terrainType)
         {
             Cell = cell;
-            HeightMultiplier = heightMultiplier;
+            Height = heightMultiplier;
 
             this.transform = transform;
             TerrainType = terrainType;
@@ -257,21 +244,21 @@ public class HexMap : MonoBehaviour
             return m;
         }
 
-        public void RecalculateEdges(List<Hexagon> neighbours, Matrix4x4 transform)
+        public void RecalculateEdges(List<HexagonMesh> neighbours, Matrix4x4 transform)
         {
             // Re-assign the edges variable
             Edges = GenerateEdgeMeshesForNeighbours(neighbours, transform);
         }
 
-        private List<CombineInstance> GenerateEdgeMeshesForNeighbours(List<Hexagon> neighbours, Matrix4x4 transform)
+        private List<CombineInstance> GenerateEdgeMeshesForNeighbours(List<HexagonMesh> neighbours, Matrix4x4 transform)
         {
             List<CombineInstance> newMeshesToAdd = new List<CombineInstance>();
 
             // Check each neighbour
-            foreach (Hexagon neighbour in neighbours)
+            foreach (HexagonMesh neighbour in neighbours)
             {
                 // Don't check it's self and ensure we actually want to create edges here
-                if (!neighbour.Cell.Equals(Cell) && HeightMultiplier > neighbour.HeightMultiplier)
+                if (!neighbour.Cell.Equals(Cell) && Height > neighbour.Height)
                 {
                     List<(Vector3, Vector3)> sharedVertices = new List<(Vector3, Vector3)>();
 
@@ -282,7 +269,7 @@ public class HexMap : MonoBehaviour
                         {
                             // Hexagons are next to each other and current is above the neighbour
 
-                            if (Mathf.Approximately(neighbourVertex.x, vertex.x) && Mathf.Approximately(neighbourVertex.z, vertex.z) && HeightMultiplier > neighbour.HeightMultiplier)
+                            if (Mathf.Approximately(neighbourVertex.x, vertex.x) && Mathf.Approximately(neighbourVertex.z, vertex.z) && Height > neighbour.Height)
                             {
                                 sharedVertices.Add((vertex, neighbourVertex));
                             }
@@ -327,14 +314,6 @@ public class HexMap : MonoBehaviour
             // Once we get here all neighbours have been checked
             return newMeshesToAdd;
         }
-
-
-        public enum Terrain
-        {
-            Land,
-            Water,
-        }
-
 
         public static List<Vector3Int> CalculatePossibleNeighbourCells(in Vector3Int current)
         {
@@ -386,8 +365,6 @@ public class HexMap : MonoBehaviour
                 // Compare them
                 return angle1.CompareTo(angle2);
             }
-
-
         }
     }
 }
