@@ -49,7 +49,7 @@ public class HexMap : MonoBehaviour
 
         foreach (KeyValuePair<Vector3Int, Hexagon> pair in Hexagons)
         {
-            hexMeshes[pair.Key] = new HexagonMesh(pair.Key, transform.localToWorldMatrix, pair.Value.CentreOfFaceWorld, pair.Value.Height, pair.Value.TerrainType);
+            hexMeshes[pair.Key] = new HexagonMesh(pair.Key, pair.Value.CentreOfFaceWorld, pair.Value.Height, pair.Value.TerrainType);
         }
 
         // Recalculate each edge for all the hexagons in this chunk
@@ -81,7 +81,7 @@ public class HexMap : MonoBehaviour
             }
 
             // Add the face of the hexagon
-            hexagonLayers[h.Height].Add(h.FaceCombineInstance);
+            hexagonLayers[h.Height].Add(new CombineInstance() { mesh = h.Face, transform = transform.worldToLocalMatrix });
 
             // Add all the hexagons edges
             foreach (CombineInstance c in h.Edges)
@@ -135,19 +135,16 @@ public class HexMap : MonoBehaviour
         public readonly Vector3 CentreOfFaceWorld;
 
         public Mesh Face;
-        private readonly Matrix4x4 transform;
-        public CombineInstance FaceCombineInstance { get { return new CombineInstance() { mesh = Face, transform = transform, }; } }
 
         public List<CombineInstance> Edges = new List<CombineInstance>();
 
         public Terrain TerrainType;
 
-        public HexagonMesh(Vector3Int cell, Matrix4x4 transform, Vector3 centreOfFace, float heightMultiplier, Terrain terrainType)
+        public HexagonMesh(Vector3Int cell, Vector3 centreOfFace, float heightMultiplier, Terrain terrainType)
         {
             Cell = cell;
             Height = heightMultiplier;
 
-            this.transform = transform;
             TerrainType = terrainType;
             CentreOfFaceWorld = centreOfFace;
 
