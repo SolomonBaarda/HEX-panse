@@ -77,7 +77,8 @@ public class TerrainGenerator : MonoBehaviour
 
                 if (tile == Land)
                 {
-                    heights[index] = Noise.Perlin(Settings, seed, new Vector2(x, y));
+                    Vector3 samplePoint = TileTypes.layoutGrid.GetCellCenterWorld(position);
+                    heights[index] = Noise.Perlin(Settings, seed, new Vector2(samplePoint.x, samplePoint.z));
                 }
                 else if (tile == AlwaysLand)
                 {
