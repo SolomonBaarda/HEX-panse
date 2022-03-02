@@ -127,7 +127,6 @@ public class TerrainGenerator : MonoBehaviour
             HexMap.AddHexagon(positions[i], heights[i], terrain[i]);
         }
 
-        // Set all the tiles
         yield return null;
 
         HexMap.GenerateMeshFromHexagons();

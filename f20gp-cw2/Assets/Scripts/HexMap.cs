@@ -8,21 +8,17 @@ public class HexMap : MonoBehaviour
     // Constants
     public const float GridSize = 1.0f;
     public const float HexagonEdgeLength = GridSize / 2;
+    private Grid Grid;
 
     [Header("Grid display settings")]
     [Min(0)] public float HeightOffset = 1.0f;
-    [Min(1)] public int MaxTerraces = 5;
-
-    [Header("Chunk settings")]
-    public Transform TerrainParent;
 
     public Dictionary<Vector3Int, Hexagon> Hexagons { get; protected set; } = new Dictionary<Vector3Int, Hexagon>();
 
     [Header("Object references")]
-    private Grid Grid;
-
-    [Space]
+    public Transform TerrainParent;
     public Material GroundMaterial;
+    public GameObject TerrainLayerPrefab;
 
     private void Awake()
     {
@@ -41,6 +37,11 @@ public class HexMap : MonoBehaviour
         Hexagons.Clear();
     }
 
+    public void AddHexagon(Vector3Int cell, float height, Terrain type)
+    {
+        Vector3 centreOfFaceWorld = Grid.GetCellCenterWorld(cell) + new Vector3(0, height * HeightOffset, 0);
+        Hexagons[cell] = new Hexagon(height, centreOfFaceWorld, type);
+    }
 
     public void GenerateMeshFromHexagons()
     {
@@ -63,104 +64,54 @@ public class HexMap : MonoBehaviour
                 {
                     neighbours.Add(hexMeshes[neighbourCell]);
                 }
-
             }
 
             // Now recalculate all the edges for this hexagon
-            h.RecalculateEdges(neighbours, transform.localToWorldMatrix);
+            h.CalculateMeshForEdges(neighbours, transform.localToWorldMatrix);
         }
 
-        // Get all the meshes
-        Dictionary<float, List<CombineInstance>> heightToMesh = new Dictionary<float, List<CombineInstance>>();
-
-        // Sort the meshes by height
+        // Now combine all hexagons of the same height
+        Dictionary<float, List<CombineInstance>> hexagonLayers = new Dictionary<float, List<CombineInstance>>();
         foreach (HexagonMesh h in hexMeshes.Values)
         {
-            // Check that the entry exists
-            if (!heightToMesh.TryGetValue(h.Height, out List<CombineInstance> meshes))
+            // Ensure that the entry exists
+            if (!hexagonLayers.ContainsKey(h.Height))
             {
-                // Create a new list and add it as a value
-                meshes = new List<CombineInstance>();
-                heightToMesh[h.Height] = meshes;
+                hexagonLayers[h.Height] = new List<CombineInstance>();
             }
 
             // Add the face of the hexagon
-            meshes.Add(h.FaceCombineInstance);
+            hexagonLayers[h.Height].Add(h.FaceCombineInstance);
 
-            // Add any other meshes now
-
-            if (h.Edges != null)
+            // Add all the hexagons edges
+            foreach (CombineInstance c in h.Edges)
             {
-                // Add all the hexagons edges
-                foreach (CombineInstance c in h.Edges)
-                {
-                    meshes.Add(c);
-                }
+                hexagonLayers[h.Height].Add(c);
             }
         }
 
-        List<MeshFilter> allSubMeshes = new List<MeshFilter>();
-
-
-        // Here make a seperate mesh for each height layer
-
         // Loop through all meshes for each height
-        foreach (float key in heightToMesh.Keys)
+        foreach (float height in hexagonLayers.Keys)
         {
-            heightToMesh.TryGetValue(key, out List<CombineInstance> meshes);
-
-            // Combine all the meshes
+            // Combine all the meshes for this layer
             Mesh m = new Mesh();
-            m.CombineMeshes(meshes.ToArray(), true);
+            m.CombineMeshes(hexagonLayers[height].ToArray(), true);
 
             // Optimise the mesh
-            OptimiseMesh(m);
+            m.RecalculateNormals();
+            m.RecalculateTangents();
+            m.RecalculateBounds();
+            m.Optimize();
 
-            // Create the new mesh filter object
-            allSubMeshes.Add(InstantiateMeshFilter(m, key, GroundMaterial));
+            // Instantiate the mesh in the scene
+            GameObject g = Instantiate(TerrainLayerPrefab, TerrainParent);
+            g.name = height.ToString();
+
+            g.GetComponent<MeshFilter>().mesh = m;
+            MeshRenderer r = g.GetComponent<MeshRenderer>();
+            r.material = GroundMaterial;
+            r.material.SetFloat("Height", height);
         }
-    }
-
-
-    public void AddHexagon(Vector3Int cell, float height, Terrain type)
-    {
-        Vector3 centreOfFaceWorld = Grid.GetCellCenterWorld(cell) + new Vector3(0, height * HeightOffset, 0);
-        Hexagons[cell] = new Hexagon(height, centreOfFaceWorld, type);
-    }
-
-    private static void OptimiseMesh(Mesh m)
-    {
-        // Apply all optimisations
-        m.RecalculateNormals();
-        m.RecalculateTangents();
-        m.RecalculateBounds();
-        m.Optimize();
-    }
-
-
-
-
-
-
-
-
-    private MeshFilter InstantiateMeshFilter(Mesh m, float heightMultiplier, Material material)
-    {
-        // Create the new GameObject
-        GameObject g = new GameObject("Mesh Layer " + heightMultiplier.ToString());
-        g.transform.parent = TerrainParent;
-
-        MeshFilter f = g.AddComponent<MeshFilter>();
-        f.mesh = m;
-
-        MeshRenderer r = g.AddComponent<MeshRenderer>();
-
-        r.sharedMaterial = material;
-        r.material.SetFloat("Height", heightMultiplier);
-
-
-
-        return f;
     }
 
     public class Hexagon
@@ -244,13 +195,7 @@ public class HexMap : MonoBehaviour
             return m;
         }
 
-        public void RecalculateEdges(List<HexagonMesh> neighbours, Matrix4x4 transform)
-        {
-            // Re-assign the edges variable
-            Edges = GenerateEdgeMeshesForNeighbours(neighbours, transform);
-        }
-
-        private List<CombineInstance> GenerateEdgeMeshesForNeighbours(List<HexagonMesh> neighbours, Matrix4x4 transform)
+        public void CalculateMeshForEdges(List<HexagonMesh> neighbours, Matrix4x4 transform)
         {
             List<CombineInstance> newMeshesToAdd = new List<CombineInstance>();
 
@@ -312,7 +257,7 @@ public class HexMap : MonoBehaviour
             }
 
             // Once we get here all neighbours have been checked
-            return newMeshesToAdd;
+            Edges = newMeshesToAdd;
         }
 
         public static List<Vector3Int> CalculatePossibleNeighbourCells(in Vector3Int current)
