@@ -12,10 +12,14 @@ public class TerrainGeneratorEditor : Editor
         TerrainGenerator t = (TerrainGenerator)target;
         DrawDefaultInspector();
 
-        if (GUILayout.Button("Generate"))
+        if (Application.isPlaying && GUILayout.Button("Generate"))
         {
             t.Generate();
         }
-    }
 
+        if (Application.isPlaying && GUILayout.Button("Clear"))
+        {
+            t.HexMap.ClearAll();
+        }
+    }
 }
