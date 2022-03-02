@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Grid))]
 public class HexMap : MonoBehaviour
 {
     // Constants
@@ -22,7 +23,6 @@ public class HexMap : MonoBehaviour
 
     [Space]
     public Material GroundMaterial;
-    public Material WaterMaterial;
 
     private void Awake()
     {

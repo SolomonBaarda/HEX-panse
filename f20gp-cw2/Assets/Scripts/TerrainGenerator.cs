@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class TerrainGenerator : MonoBehaviour
 {
-    public Grid grid;
     public HexMap HexMap;
 
     public bool IsGenerating { get; private set; } = false;
@@ -16,8 +15,6 @@ public class TerrainGenerator : MonoBehaviour
     [Space]
     public int Seed = 0;
     public bool DoRandomSeed = false;
-
-
 
     private void Start()
     {
