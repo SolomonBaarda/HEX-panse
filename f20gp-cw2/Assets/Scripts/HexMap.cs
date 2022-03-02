@@ -210,8 +210,8 @@ public class HexMap : MonoBehaviour
                         foreach (Vector3 vertex in Face.vertices)
                         {
                             // Hexagons are next to each other and current is above the neighbour
-
-                            if (Mathf.Approximately(neighbourVertex.x, vertex.x) && Mathf.Approximately(neighbourVertex.z, vertex.z) && Height > neighbour.Height)
+                            
+                            if (Mathf.Approximately(neighbourVertex.x, vertex.x) && Mathf.Approximately(neighbourVertex.z, vertex.z))
                             {
                                 sharedVertices.Add((vertex, neighbourVertex));
                             }
@@ -242,13 +242,12 @@ public class HexMap : MonoBehaviour
                         };
 
                         // Add the mesh to the list of meshes to be merged
-                        CombineInstance com = new CombineInstance
-                        {
-                            mesh = m,
-                            transform = transform
-                        };
-
-                        newMeshesToAdd.Add(com);
+                        newMeshesToAdd.Add(new CombineInstance() { mesh = m, transform = transform });
+                    }
+                    else
+                    {
+                        Debug.LogError("Failed to generate hexagon edge mesh");
+                        Debug.LogError(sharedVertices.Count);
                     }
                 }
             }
