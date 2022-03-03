@@ -45,46 +45,38 @@ public class HexMap : MonoBehaviour
 
     public void GenerateMeshFromHexagons()
     {
-        Dictionary<Vector3Int, HexagonMesh> hexMeshes = new Dictionary<Vector3Int, HexagonMesh>();
-        Dictionary<float, List<CombineInstance>> hexagonLayers = new Dictionary<float, List<CombineInstance>>();
+        Dictionary<float, List<CombineInstance>> terrainLayers = new Dictionary<float, List<CombineInstance>>();
 
-        // Set all hexagons
-        foreach (KeyValuePair<Vector3Int, Hexagon> pair in Hexagons)
-        {
-            hexMeshes[pair.Key] = new HexagonMesh(pair.Key, pair.Value.CentreOfFaceWorld, pair.Value.Height, pair.Value.TerrainType);
-        }
-
-        // Calculate meshes for each hexagon
-        foreach (HexagonMesh h in hexMeshes.Values)
+        // Calculate meshes for layer of the terrain
+        foreach (KeyValuePair<Vector3Int, Hexagon> h in Hexagons)
         {
             // Ensure that the entry exists
-            if (!hexagonLayers.ContainsKey(h.Height))
+            if (!terrainLayers.ContainsKey(h.Value.Height))
             {
-                hexagonLayers[h.Height] = new List<CombineInstance>();
+                terrainLayers[h.Value.Height] = new List<CombineInstance>();
             }
 
             // Add the face of the hexagon
-            hexagonLayers[h.Height].Add(new CombineInstance() { mesh = h.GenerateFaceMesh(), transform = transform.worldToLocalMatrix });
+            terrainLayers[h.Value.Height].Add(new CombineInstance() { mesh = h.Value.GenerateFaceMesh(), transform = transform.worldToLocalMatrix });
 
-            // Get all neighbour hexagons
-            List<HexagonMesh> neighbours = new List<HexagonMesh>();
-            foreach ((Vector3Int, HexagonMesh.NeighbourDirection) neighbour in HexagonMesh.CalculateAllPossibleNeighbourCells(h.Cell))
+            // Add all edges of this hexagon
+            List<Hexagon> neighbours = new List<Hexagon>();
+            foreach ((Vector3Int, Hexagon.NeighbourDirection) neighbour in Hexagon.CalculateAllPossibleNeighbourCells(h.Key))
             {
-                // Get the valid chunk
-                if (hexMeshes.ContainsKey(neighbour.Item1) && h.CentreOfFaceWorld.y > hexMeshes[neighbour.Item1].CentreOfFaceWorld.y)
+                if (Hexagons.ContainsKey(neighbour.Item1) && h.Value.CentreOfFaceWorld.y > Hexagons[neighbour.Item1].CentreOfFaceWorld.y)
                 {
-                    Mesh edge = h.GenerateMeshEdgeForNeighbour(hexMeshes[neighbour.Item1], neighbour.Item2);
-                    hexagonLayers[h.Height].Add(new CombineInstance() { mesh = edge, transform = transform.worldToLocalMatrix });
+                    Mesh edge = h.Value.GenerateMeshEdgeForNeighbour(Hexagons[neighbour.Item1], neighbour.Item2);
+                    terrainLayers[h.Value.Height].Add(new CombineInstance() { mesh = edge, transform = transform.worldToLocalMatrix });
                 }
             }
         }
 
-        // Loop through all meshes for each height
-        foreach (float height in hexagonLayers.Keys)
+        // Loop through all terrain layers and combine them into a single mesh
+        foreach (float height in terrainLayers.Keys)
         {
             // Combine all the meshes for this layer
             Mesh m = new Mesh();
-            m.CombineMeshes(hexagonLayers[height].ToArray(), true);
+            m.CombineMeshes(terrainLayers[height].ToArray(), true);
 
             // Optimise the mesh
             m.RecalculateNormals();
@@ -109,46 +101,20 @@ public class HexMap : MonoBehaviour
         public readonly Vector3 CentreOfFaceWorld;
         public Terrain TerrainType;
 
+        // Positions of the face vertexes in world space
+        // NOTE: our hexagon's aren't mathematically correct as they use the Unity hex grid for positioning
+        public Vector3 TopCentreVertex => CentreOfFaceWorld + new Vector3(0, 0, HexagonEdgeLength);
+        public Vector3 BottomCentreVertex => CentreOfFaceWorld + new Vector3(0, 0, -HexagonEdgeLength);
+        public Vector3 TopLeftVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, HexagonEdgeLength / 2);
+        public Vector3 TopRightVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, HexagonEdgeLength / 2);
+        public Vector3 BottomLeftVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
+        public Vector3 BottomRightVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
+
         public Hexagon(float height, Vector3 centreOfFaceWorld, Terrain terrain)
         {
             Height = height;
             CentreOfFaceWorld = centreOfFaceWorld;
             TerrainType = terrain;
-        }
-    }
-
-    private class HexagonMesh
-    {
-        public readonly Vector3Int Cell;
-        public readonly float Height;
-        public readonly Vector3 CentreOfFaceWorld;
-
-        public Terrain TerrainType;
-
-
-        // Don't use this as our hexagons aren't EXACTLY mathematically perfect, but good enough for the grid
-        /*
-        float sqrt3 = Mathf.Sqrt(3);
-        float xOffset = (sqrt3 * HexagonEdgeLength) / 2;
-        */
-
-        public Vector3 TopCentreVertex => CentreOfFaceWorld + new Vector3(0, 0, HexagonEdgeLength);
-        public Vector3 BottomCentreVertex => CentreOfFaceWorld + new Vector3(0, 0, -HexagonEdgeLength);
-
-        public Vector3 TopLeftVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, HexagonEdgeLength / 2);
-        public Vector3 TopRightVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, HexagonEdgeLength / 2);
-
-        public Vector3 BottomLeftVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
-        public Vector3 BottomRightVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
-
-
-        public HexagonMesh(Vector3Int cell, Vector3 centreOfFace, float heightMultiplier, Terrain terrainType)
-        {
-            Cell = cell;
-            Height = heightMultiplier;
-
-            TerrainType = terrainType;
-            CentreOfFaceWorld = centreOfFace;
         }
 
         public enum NeighbourDirection
@@ -182,7 +148,7 @@ public class HexMap : MonoBehaviour
             return m;
         }
 
-        public Mesh GenerateMeshEdgeForNeighbour(HexagonMesh neighbour, NeighbourDirection direction)
+        public Mesh GenerateMeshEdgeForNeighbour(Hexagon neighbour, NeighbourDirection direction)
         {
             Vector3[] vertices = new Vector3[4];
             int[] triangles = new int[] { 0, 1, 3, 0, 3, 2 };
@@ -263,8 +229,6 @@ public class HexMap : MonoBehaviour
             { (upLeft, NeighbourDirection.UpLeft), (upRight, NeighbourDirection.UpRight), (right, NeighbourDirection.Right),
                 (downRight, NeighbourDirection.DownRight), (downLeft, NeighbourDirection.DownLeft), (left, NeighbourDirection.Left) });
         }
-
     }
+
 }
-
-
