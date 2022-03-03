@@ -1,8 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-using Cinemachine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,11 +11,10 @@ public class GameManager : MonoBehaviour
     public int PlayerTurn;
 
 
-    [Header("Camera Stuff")]
-    public Camera Camera;
+
     public LayerMask MouseLayerMask;
     public float MouseRaycastDistance = 100.0f;
-   
+
     public bool IsHoveringOverCell { get; protected set; } = false;
     public Vector3Int CellHoveringOver { get; protected set; } = default;
 
@@ -39,9 +37,6 @@ public class GameManager : MonoBehaviour
     List<Vector3Int> EnemyCities = new List<Vector3Int>();
 
     Dictionary<Vector3Int, GameObject> GameObjects = new Dictionary<Vector3Int, GameObject>();
-
-
-
 
     private void Start()
     {
@@ -70,6 +65,14 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator PlayGame()
     {
+        AsyncOperation load = SceneManager.LoadSceneAsync("HUD", LoadSceneMode.Additive);
+
+        // Wait for HUD to load
+        while (!load.isDone)
+        {
+            yield return null;
+        }
+
         TerrainGenerator.Generate();
 
         while (TerrainGenerator.IsGenerating)
@@ -100,7 +103,7 @@ public class GameManager : MonoBehaviour
         }
 
 
-        
+
 
         CameraManager.SetupCameras(cameraCityPositions);
 
@@ -150,6 +153,11 @@ public class GameManager : MonoBehaviour
                 // Do player turn
                 currentPlayer = p;
                 PlayerTurn = (int)p.ID;
+
+                HUD.Instance.PlayerTurnText.text = $"Current turn: player {PlayerTurn}";
+                HUD.Instance.PlayerTurnText.color = p.Colour;
+
+                // Set the position that the camera should try and move to
                 CameraManager.CameraFollow.position = HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld;
 
                 // Wait here while it is this players turn
@@ -180,25 +188,18 @@ public class GameManager : MonoBehaviour
     private void UpdateHighlight()
     {
         IsHoveringOverCell = false;
-        Vector3 viewport = Camera.ScreenToViewportPoint(Input.mousePosition);
 
-        // Mouse within window
-        if (viewport.x >= 0 && viewport.x <= 1 && viewport.y >= 0 && viewport.y <= 1)
+        if (CameraManager.IsHoveringMouseOverTerrain(MouseRaycastDistance, MouseLayerMask, out Vector3 position))
         {
-            Ray ray = Camera.ScreenPointToRay(Input.mousePosition);
-
-            if (Physics.Raycast(ray, out RaycastHit hit, MouseRaycastDistance, MouseLayerMask))
+            Vector3Int cell = HexMap.Grid.WorldToCell(new Vector3(position.x, 0, position.z));
+            if (HexMap.Hexagons.ContainsKey(cell) && CanMoveToCell(currentPlayer, cell))
             {
-                Vector3Int cell = HexMap.Grid.WorldToCell(new Vector3(hit.point.x, 0, hit.point.z));
-                if (HexMap.Hexagons.ContainsKey(cell) && CanMoveToCell(currentPlayer, cell))
-                {
-                    IsHoveringOverCell = true;
-                    CellHoveringOver = cell;
+                IsHoveringOverCell = true;
+                CellHoveringOver = cell;
 
-                    Vector3 previewPosition = HexMap.Hexagons[cell].CentreOfFaceWorld;
-                    previewPosition.y += 0.001f;
-                    HoverCellPreview.position = previewPosition;
-                }
+                Vector3 previewPosition = HexMap.Hexagons[cell].CentreOfFaceWorld;
+                previewPosition.y += 0.001f;
+                HoverCellPreview.position = previewPosition;
             }
         }
 

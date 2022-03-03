@@ -5,6 +5,8 @@ using Cinemachine;
 
 public class CameraManager : MonoBehaviour
 {
+    public Camera MainCamera;
+
     public CinemachineSmoothPath CameraPath;
 
     public float CameraHeightOffGround = 3.0f;
@@ -41,6 +43,26 @@ public class CameraManager : MonoBehaviour
         CameraPath.m_Waypoints = waypoints;
 
         CameraLookAt.position = centre;
+    }
+
+    public bool IsHoveringMouseOverTerrain(float raycastDistance, LayerMask layermask, out Vector3 position)
+    {
+        Vector3 viewport = MainCamera.ScreenToViewportPoint(Input.mousePosition);
+
+        // Mouse within window
+        if (viewport.x >= 0 && viewport.x <= 1 && viewport.y >= 0 && viewport.y <= 1)
+        {
+            Ray ray = MainCamera.ScreenPointToRay(Input.mousePosition);
+
+            if (Physics.Raycast(ray, out RaycastHit hit, raycastDistance, layermask))
+            {
+                position = hit.point;
+                return true;
+            }
+        }
+
+        position = Vector3.zero;
+        return false;
     }
 
 

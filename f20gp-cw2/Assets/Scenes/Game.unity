@@ -3920,7 +3920,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Path: {fileID: 1137612142}
-  m_PathPosition: -168.2
+  m_PathPosition: -706.2
   m_PositionUnits: 0
   m_PathOffset: {x: 0, y: 0, z: 0}
   m_XDamping: 3
@@ -4340,7 +4340,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   NumberOfPlayers: 5
   PlayerTurn: 0
-  Camera: {fileID: 963194227}
   MouseLayerMask:
     serializedVersion: 2
     m_Bits: 64
@@ -4364,6 +4363,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3198899638bb7304fb05647d1bdbafa8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MainCamera: {fileID: 963194227}
   CameraPath: {fileID: 1137612142}
   CameraHeightOffGround: 3
   CameraDistanceFromCity: 1
