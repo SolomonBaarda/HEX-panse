@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using Cinemachine;
+
 public class GameManager : MonoBehaviour
 {
     [Range(2, 6)]
@@ -14,11 +16,13 @@ public class GameManager : MonoBehaviour
     public Camera Camera;
     public LayerMask MouseLayerMask;
     public float MouseRaycastDistance = 100.0f;
-
+   
     public bool IsHoveringOverCell { get; protected set; } = false;
     public Vector3Int CellHoveringOver { get; protected set; } = default;
 
     public Transform HoverCellPreview;
+
+    public CameraManager CameraManager;
 
     [Header("Terrain Stuff")]
     public TerrainGenerator TerrainGenerator;
@@ -30,9 +34,14 @@ public class GameManager : MonoBehaviour
     public PlayerSettings PlayerSettings;
     List<Player> Players = new List<Player>();
 
+    Player currentPlayer;
+
     List<Vector3Int> EnemyCities = new List<Vector3Int>();
 
     Dictionary<Vector3Int, GameObject> GameObjects = new Dictionary<Vector3Int, GameObject>();
+
+
+
 
     private void Start()
     {
@@ -56,10 +65,10 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
-        StartCoroutine(WaitForStartGame());
+        StartCoroutine(PlayGame());
     }
 
-    private IEnumerator WaitForStartGame()
+    private IEnumerator PlayGame()
     {
         TerrainGenerator.Generate();
 
@@ -71,6 +80,7 @@ public class GameManager : MonoBehaviour
         System.Random r = new System.Random(TerrainGenerator.Seed);
 
         List<Vector3Int> cities = new List<Vector3Int>();
+        List<Vector3> cameraCityPositions = new List<Vector3>();
 
         foreach (KeyValuePair<Vector3Int, HexMap.Hexagon> hex in HexMap.Hexagons)
         {
@@ -79,6 +89,8 @@ public class GameManager : MonoBehaviour
             {
                 cities.Add(hex.Key);
                 GameObjects[hex.Key] = Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
+
+                cameraCityPositions.Add(HexMap.Hexagons[hex.Key].CentreOfFaceWorld);
             }
             else if (hex.Value.Biome is Biome.EnemyCity)
             {
@@ -86,6 +98,11 @@ public class GameManager : MonoBehaviour
                 GameObjects[hex.Key] = Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
             }
         }
+
+
+        
+
+        CameraManager.SetupCameras(cameraCityPositions);
 
         // Choose player starting positions
         switch (cities.Count)
@@ -124,9 +141,43 @@ public class GameManager : MonoBehaviour
         EnemyCities.AddRange(cities);
 
         Debug.Log($"Playing with {Players.Count} players and {EnemyCities.Count} enemies");
+
+
+        while (true)
+        {
+            foreach (Player p in Players)
+            {
+                // Do player turn
+                currentPlayer = p;
+                PlayerTurn = (int)p.ID;
+                CameraManager.CameraFollow.position = HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld;
+
+                // Wait here while it is this players turn
+                while (currentPlayer == p)
+                {
+                    yield return null;
+                }
+            }
+
+            // Do enemy turn
+        }
     }
 
+
     private void Update()
+    {
+        if (currentPlayer != null)
+        {
+            UpdateHighlight();
+
+            if (Input.GetButtonDown("Fire1"))
+            {
+                currentPlayer = null;
+            }
+        }
+    }
+
+    private void UpdateHighlight()
     {
         IsHoveringOverCell = false;
         Vector3 viewport = Camera.ScreenToViewportPoint(Input.mousePosition);
@@ -139,7 +190,7 @@ public class GameManager : MonoBehaviour
             if (Physics.Raycast(ray, out RaycastHit hit, MouseRaycastDistance, MouseLayerMask))
             {
                 Vector3Int cell = HexMap.Grid.WorldToCell(new Vector3(hit.point.x, 0, hit.point.z));
-                if (HexMap.Hexagons.ContainsKey(cell) && HexMap.Hexagons[cell].Biome != Biome.None)
+                if (HexMap.Hexagons.ContainsKey(cell) && CanMoveToCell(currentPlayer, cell))
                 {
                     IsHoveringOverCell = true;
                     CellHoveringOver = cell;
@@ -154,10 +205,22 @@ public class GameManager : MonoBehaviour
         HoverCellPreview.gameObject.SetActive(IsHoveringOverCell);
     }
 
+    private bool CanMoveToCell(Player p, Vector3Int cell)
+    {
+        if (HexMap.Hexagons[cell].Biome != Biome.None && cell != p.CurrentCell)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public class Player
     {
         public readonly uint ID;
         public readonly Color Colour;
+
+        public Vector3Int CurrentCell;
 
         public readonly List<Vector3Int> ControlledCities = new List<Vector3Int>();
 
@@ -166,6 +229,7 @@ public class GameManager : MonoBehaviour
             ID = id;
             Colour = colour;
 
+            CurrentCell = startingCity;
             ControlledCities.Add(startingCity);
         }
     }
