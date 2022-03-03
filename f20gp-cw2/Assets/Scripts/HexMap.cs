@@ -46,32 +46,15 @@ public class HexMap : MonoBehaviour
     public void GenerateMeshFromHexagons()
     {
         Dictionary<Vector3Int, HexagonMesh> hexMeshes = new Dictionary<Vector3Int, HexagonMesh>();
+        Dictionary<float, List<CombineInstance>> hexagonLayers = new Dictionary<float, List<CombineInstance>>();
 
+        // Set all hexagons
         foreach (KeyValuePair<Vector3Int, Hexagon> pair in Hexagons)
         {
             hexMeshes[pair.Key] = new HexagonMesh(pair.Key, pair.Value.CentreOfFaceWorld, pair.Value.Height, pair.Value.TerrainType);
         }
 
-        // Recalculate each edge for all the hexagons in this chunk
-        foreach (HexagonMesh h in hexMeshes.Values)
-        {
-            // Get all neighbour hexagons
-            List<HexagonMesh> neighbours = new List<HexagonMesh>();
-            foreach (Vector3Int neighbourCell in HexagonMesh.CalculatePossibleNeighbourCells(h.Cell))
-            {
-                // Get the valid chunk
-                if (hexMeshes.ContainsKey(neighbourCell))
-                {
-                    neighbours.Add(hexMeshes[neighbourCell]);
-                }
-            }
-
-            // Now recalculate all the edges for this hexagon
-            h.CalculateMeshForEdges(neighbours, transform.localToWorldMatrix);
-        }
-
-        // Now combine all hexagons of the same height
-        Dictionary<float, List<CombineInstance>> hexagonLayers = new Dictionary<float, List<CombineInstance>>();
+        // Calculate meshes for each hexagon
         foreach (HexagonMesh h in hexMeshes.Values)
         {
             // Ensure that the entry exists
@@ -81,12 +64,18 @@ public class HexMap : MonoBehaviour
             }
 
             // Add the face of the hexagon
-            hexagonLayers[h.Height].Add(new CombineInstance() { mesh = h.Face, transform = transform.worldToLocalMatrix });
+            hexagonLayers[h.Height].Add(new CombineInstance() { mesh = h.GenerateFaceMesh(), transform = transform.worldToLocalMatrix });
 
-            // Add all the hexagons edges
-            foreach (CombineInstance c in h.Edges)
+            // Get all neighbour hexagons
+            List<HexagonMesh> neighbours = new List<HexagonMesh>();
+            foreach ((Vector3Int, HexagonMesh.NeighbourDirection) neighbour in HexagonMesh.CalculateAllPossibleNeighbourCells(h.Cell))
             {
-                hexagonLayers[h.Height].Add(c);
+                // Get the valid chunk
+                if (hexMeshes.ContainsKey(neighbour.Item1) && h.CentreOfFaceWorld.y > hexMeshes[neighbour.Item1].CentreOfFaceWorld.y)
+                {
+                    Mesh edge = h.GenerateMeshEdgeForNeighbour(hexMeshes[neighbour.Item1], neighbour.Item2);
+                    hexagonLayers[h.Height].Add(new CombineInstance() { mesh = edge, transform = transform.worldToLocalMatrix });
+                }
             }
         }
 
@@ -134,13 +123,7 @@ public class HexMap : MonoBehaviour
         public readonly float Height;
         public readonly Vector3 CentreOfFaceWorld;
 
-        public Mesh Face;
-
-        public List<CombineInstance> Edges = new List<CombineInstance>();
-
         public Terrain TerrainType;
-
-
 
 
         // Don't use this as our hexagons aren't EXACTLY mathematically perfect, but good enough for the grid
@@ -149,15 +132,14 @@ public class HexMap : MonoBehaviour
         float xOffset = (sqrt3 * HexagonEdgeLength) / 2;
         */
 
-        public Vector3 TopFaceVertex => CentreOfFaceWorld + new Vector3(0, 0, HexagonEdgeLength);
-        public Vector3 BottomFaceVertex => CentreOfFaceWorld + new Vector3(0, 0, -HexagonEdgeLength);
+        public Vector3 TopCentreVertex => CentreOfFaceWorld + new Vector3(0, 0, HexagonEdgeLength);
+        public Vector3 BottomCentreVertex => CentreOfFaceWorld + new Vector3(0, 0, -HexagonEdgeLength);
 
-        public Vector3 TopLeftFaceVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, HexagonEdgeLength / 2);
-        public Vector3 TopRightFaceVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, HexagonEdgeLength / 2);
+        public Vector3 TopLeftVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, HexagonEdgeLength / 2);
+        public Vector3 TopRightVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, HexagonEdgeLength / 2);
 
-        public Vector3 BottomLeftFaceVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
-        public Vector3 BottomRightFaceVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
-
+        public Vector3 BottomLeftVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
+        public Vector3 BottomRightVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
 
 
         public HexagonMesh(Vector3Int cell, Vector3 centreOfFace, float heightMultiplier, Terrain terrainType)
@@ -167,18 +149,22 @@ public class HexMap : MonoBehaviour
 
             TerrainType = terrainType;
             CentreOfFaceWorld = centreOfFace;
-
-            Face = GenerateFaceMesh();
         }
 
+        public enum NeighbourDirection
+        {
+            UpLeft, UpRight,
+            Left, Right,
+            DownLeft, DownRight
+        }
 
-        private Mesh GenerateFaceMesh()
+        public Mesh GenerateFaceMesh()
         {
             // Create the mesh
             Mesh m = new Mesh
             {
                 // Add vertices
-                vertices = new Vector3[] { TopFaceVertex, TopRightFaceVertex, BottomRightFaceVertex, BottomFaceVertex, BottomLeftFaceVertex, TopLeftFaceVertex, CentreOfFaceWorld },
+                vertices = new Vector3[] { TopCentreVertex, TopRightVertex, BottomRightVertex, BottomCentreVertex, BottomLeftVertex, TopLeftVertex, CentreOfFaceWorld },
                 // Add the triangles of the mesh
                 triangles = new int[]
                 {
@@ -196,121 +182,88 @@ public class HexMap : MonoBehaviour
             return m;
         }
 
-        public void CalculateMeshForEdges(List<HexagonMesh> neighbours, Matrix4x4 transform)
+        public Mesh GenerateMeshEdgeForNeighbour(HexagonMesh neighbour, NeighbourDirection direction)
         {
-            List<CombineInstance> newMeshesToAdd = new List<CombineInstance>();
+            Vector3[] vertices = new Vector3[4];
+            int[] triangles = new int[] { 0, 1, 3, 0, 3, 2 };
 
-            // Check each neighbour
-            foreach (HexagonMesh neighbour in neighbours)
+            // Face normal
+            Vector3 normal = neighbour.CentreOfFaceWorld - CentreOfFaceWorld;
+            normal.y = 0;
+            normal.Normalize();
+
+            Vector3[] normals = { normal, normal, normal, normal };
+
+            switch (direction)
             {
-                // Don't check it's self and ensure we actually want to create edges here
-                if (!neighbour.Cell.Equals(Cell) && Height > neighbour.Height)
-                {
-                    List<(Vector3, Vector3)> sharedVertices = new List<(Vector3, Vector3)>();
-
-                    // Loop through all possibilities
-                    foreach (Vector3 neighbourVertex in neighbour.Face.vertices)
-                    {
-                        foreach (Vector3 vertex in Face.vertices)
-                        {
-                            // Hexagons are next to each other and current is above the neighbour
-                            
-                            if (Mathf.Approximately(neighbourVertex.x, vertex.x) && Mathf.Approximately(neighbourVertex.z, vertex.z))
-                            {
-                                sharedVertices.Add((vertex, neighbourVertex));
-                            }
-                        }
-                    }
-
-                    // Should have 2 shared vertex pairs if hexagons are neighbours and on different heights
-                    if (sharedVertices.Count == 2)
-                    {
-                        // Make sure to assign the triangles in clockwise order
-                        sharedVertices.Sort((x, y) => Clockwise.Compare(x.Item1, y.Item1, CentreOfFaceWorld));
-                        Vector3 a = sharedVertices[0].Item1, b = sharedVertices[0].Item2, c = sharedVertices[1].Item1, d = sharedVertices[1].Item2;
-
-                        // Calculate the normal for that face
-                        Vector3 midpointOfEdge = a + ((c - a) / 2);
-                        Vector3 normal = Vector3.Normalize(midpointOfEdge - CentreOfFaceWorld);
-
-                        // Once we have all shared vertices, construct the mesh
-                        Mesh m = new Mesh
-                        {
-                            vertices = new Vector3[] { a, b, c, d },
-                            triangles = new int[]
-                            {
-                                0, 1, 3,
-                                0, 3, 2
-                            },
-                            normals = new Vector3[] { normal, normal, normal, normal },
-                        };
-
-                        // Add the mesh to the list of meshes to be merged
-                        newMeshesToAdd.Add(new CombineInstance() { mesh = m, transform = transform });
-                    }
-                    else
-                    {
-                        Debug.LogError("Failed to generate hexagon edge mesh");
-                        Debug.LogError(sharedVertices.Count);
-                    }
-                }
+                case NeighbourDirection.UpLeft:
+                    vertices[0] = TopLeftVertex;
+                    vertices[1] = neighbour.BottomCentreVertex;
+                    vertices[2] = TopCentreVertex;
+                    vertices[3] = neighbour.BottomRightVertex;
+                    break;
+                case NeighbourDirection.UpRight:
+                    vertices[0] = TopCentreVertex;
+                    vertices[1] = neighbour.BottomLeftVertex;
+                    vertices[2] = TopRightVertex;
+                    vertices[3] = neighbour.BottomCentreVertex;
+                    break;
+                case NeighbourDirection.Left:
+                    vertices[0] = BottomLeftVertex;
+                    vertices[1] = neighbour.BottomRightVertex;
+                    vertices[2] = TopLeftVertex;
+                    vertices[3] = neighbour.TopRightVertex;
+                    break;
+                case NeighbourDirection.Right:
+                    vertices[0] = TopRightVertex;
+                    vertices[1] = neighbour.TopLeftVertex;
+                    vertices[2] = BottomRightVertex;
+                    vertices[3] = neighbour.BottomLeftVertex;
+                    break;
+                case NeighbourDirection.DownLeft:
+                    vertices[0] = BottomCentreVertex;
+                    vertices[1] = neighbour.TopRightVertex;
+                    vertices[2] = BottomLeftVertex;
+                    vertices[3] = neighbour.TopCentreVertex;
+                    break;
+                case NeighbourDirection.DownRight:
+                    vertices[0] = BottomRightVertex;
+                    vertices[1] = neighbour.TopCentreVertex;
+                    vertices[2] = BottomCentreVertex;
+                    vertices[3] = neighbour.TopLeftVertex;
+                    break;
             }
 
-            // Once we get here all neighbours have been checked
-            Edges = newMeshesToAdd;
+            return new Mesh() { vertices = vertices, triangles = triangles, normals = normals };
         }
 
-        public static List<Vector3Int> CalculatePossibleNeighbourCells(in Vector3Int current)
+        public static List<(Vector3Int, NeighbourDirection)> CalculateAllPossibleNeighbourCells(in Vector3Int current)
         {
-            // Convoluted way of calculating the neighbour positions of a pointy hex grid cell
-            Vector3Int upLeft = current + new Vector3Int(-1, -1, 0);
-            Vector3Int upRight = current + new Vector3Int(0, -1, 0);
-
-            Vector3Int downLeft = current + new Vector3Int(-1, 1, 0);
-            Vector3Int downRight = current + new Vector3Int(0, 1, 0);
-
-            Vector3Int left = current + new Vector3Int(-1, 0, 0);
+            // Left and right movement is simple on a pointy hex grid
             Vector3Int right = current + new Vector3Int(1, 0, 0);
+            Vector3Int left = current + new Vector3Int(-1, 0, 0);
 
-            // Y is an odd number so need to move to right instead of left
-            if (current.y % 2 == 1)
+            // Other direction movement has odd and even cases for y values
+            // ODD CASE
+            Vector3Int upRight = current + new Vector3Int(1, 1, 0);
+            Vector3Int upLeft = current + new Vector3Int(0, 1, 0);
+            Vector3Int downRight = current + new Vector3Int(1, -1, 0);
+            Vector3Int downLeft = current + new Vector3Int(0, -1, 0);
+
+            // EVEN CASE
+            if (current.y % 2 == 0)
             {
-                upLeft = current + new Vector3Int(1, -1, 0);
-                downLeft = current + new Vector3Int(1, 1, 0);
+                upRight = current + new Vector3Int(0, 1, 0);
+                upLeft = current + new Vector3Int(-1, 1, 0);
+                downRight = current + new Vector3Int(0, -1, 0);
+                downLeft = current + new Vector3Int(-1, -1, 0);
             }
 
-            return new List<Vector3Int>(new Vector3Int[] { upLeft, upRight, right, downRight, downLeft, left });
+            return new List<(Vector3Int, NeighbourDirection)>(new (Vector3Int, NeighbourDirection)[]
+            { (upLeft, NeighbourDirection.UpLeft), (upRight, NeighbourDirection.UpRight), (right, NeighbourDirection.Right),
+                (downRight, NeighbourDirection.DownRight), (downLeft, NeighbourDirection.DownLeft), (left, NeighbourDirection.Left) });
         }
 
-        private static class Clockwise
-        {
-            public static int Compare(Vector3 first, Vector3 second, Vector3 centre)
-            {
-                Vector3 firstOffset = first - centre;
-                Vector3 secondOffset = second - centre;
-
-                // Get the angles in degrees
-                float angle1 = Mathf.Atan2(firstOffset.x, firstOffset.z) * Mathf.Rad2Deg;
-                float angle2 = Mathf.Atan2(secondOffset.x, secondOffset.z) * Mathf.Rad2Deg;
-
-                // Ensure we always have positive angles (go clockwise)
-                while (angle1 < 0) angle1 += 360;
-                while (angle2 < 0) angle2 += 360;
-
-
-                // For some reason it my gen code does not like it when the angle is 0. 
-                // Janky fix for now
-                if (angle1 == 0)
-                {
-                    float temp = angle1;
-                    angle1 = angle2;
-                    angle2 = temp;
-                }
-
-                // Compare them
-                return angle1.CompareTo(angle2);
-            }
-        }
     }
 }
 

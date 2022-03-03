@@ -37,6 +37,14 @@ public class TerrainGenerator : MonoBehaviour
     {
         if (!IsGenerating)
         {
+            //TileTypes.ClearAllTiles();
+            //TileTypes.SetTile(new Vector3Int(0, 0, 0), Land);
+            //TileTypes.SetTile(new Vector3Int(0, 1, 0), Water);
+            //TileTypes.SetTile(new Vector3Int(0, -1, 0), City);
+
+
+            //return;
+
             if (DoRandomSeed)
             {
                 Seed = Noise.RandomSeed;
