@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
 
         foreach (KeyValuePair<Vector3Int, HexMap.Hexagon> hex in HexMap.Hexagons)
         {
-            if (hex.Value.TerrainType is Terrain.City)
+            if (hex.Value.TerrainType is Biome.City)
             {
                 Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
             }

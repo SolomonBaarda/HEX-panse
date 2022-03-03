@@ -27,6 +27,17 @@ public class TerrainGenerator : MonoBehaviour
     public TileBase Water;
     public TileBase City;
 
+    [Space]
+    public float BeachThreshold = 0.25f;
+    public float MountainThreshold = 0.75f;
+
+    private enum Terrain
+    {
+        Land,
+        Water,
+        City
+    }
+
     public void Generate()
     {
         if (!IsGenerating)
@@ -123,7 +134,7 @@ public class TerrainGenerator : MonoBehaviour
             heights[i] = (float)Mathf.RoundToInt(heights[i] * NumberOfTerraces) / NumberOfTerraces;
 
             // Add the hexagon to the map
-            HexMap.AddHexagon(positions[i], heights[i], terrain[i]);
+            HexMap.AddHexagon(positions[i], heights[i], CalculateBiome(heights[i], terrain[i]));
         }
 
         yield return null;
@@ -134,6 +145,26 @@ public class TerrainGenerator : MonoBehaviour
 
         Debug.Log("Generated in " + (DateTime.Now - before).TotalSeconds.ToString("0.0") + " seconds.");
         IsGenerating = false;
+    }
+
+    private Biome CalculateBiome(float normalisedHeight, Terrain terrain)
+    {
+        switch (terrain)
+        {
+            case Terrain.Land:
+                if (normalisedHeight < BeachThreshold)
+                    return Biome.Beach;
+                else if (normalisedHeight > MountainThreshold)
+                    return Biome.Mountain;
+                else
+                    return Biome.Grass;
+            case Terrain.Water:
+                return Biome.Water;
+            case Terrain.City:
+                return Biome.City;
+            default:
+                return Biome.Water;
+        }
     }
 
 

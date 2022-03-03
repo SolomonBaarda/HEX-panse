@@ -38,7 +38,7 @@ public class HexMap : MonoBehaviour
         Hexagons.Clear();
     }
 
-    public void AddHexagon(Vector3Int cell, float height, Terrain type)
+    public void AddHexagon(Vector3Int cell, float height, Biome type)
     {
         Vector3 centreOfFaceWorld = Grid.GetCellCenterWorld(cell) + new Vector3(0, height * HeightOffset, 0);
         Hexagons[cell] = new Hexagon(height, centreOfFaceWorld, type);
@@ -103,7 +103,7 @@ public class HexMap : MonoBehaviour
     {
         public readonly float Height;
         public readonly Vector3 CentreOfFaceWorld;
-        public Terrain TerrainType;
+        public Biome TerrainType;
 
         // Positions of the face vertexes in world space
         // NOTE: our hexagon's aren't mathematically correct as they use the Unity hex grid for positioning
@@ -114,7 +114,7 @@ public class HexMap : MonoBehaviour
         public Vector3 BottomLeftVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
         public Vector3 BottomRightVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
 
-        public Hexagon(float height, Vector3 centreOfFaceWorld, Terrain terrain)
+        public Hexagon(float height, Vector3 centreOfFaceWorld, Biome terrain)
         {
             Height = height;
             CentreOfFaceWorld = centreOfFaceWorld;
