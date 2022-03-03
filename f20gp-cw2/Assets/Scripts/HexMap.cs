@@ -8,7 +8,8 @@ public class HexMap : MonoBehaviour
     // Constants
     public const float GridSize = 1.0f;
     public const float HexagonEdgeLength = GridSize / 2;
-    private Grid Grid;
+
+    public Grid Grid { get; protected set; }
 
     [Header("Grid display settings")]
     [Min(0)] public float HeightOffset = 1.0f;
@@ -88,7 +89,10 @@ public class HexMap : MonoBehaviour
             GameObject g = Instantiate(TerrainLayerPrefab, TerrainParent);
             g.name = height.ToString();
 
-            g.GetComponent<MeshFilter>().mesh = m;
+            g.GetComponent<MeshFilter>().sharedMesh = m;
+
+            g.GetComponent<MeshCollider>().sharedMesh = m;
+
             MeshRenderer r = g.GetComponent<MeshRenderer>();
             r.material = GroundMaterial;
             r.material.SetFloat("Height", height);

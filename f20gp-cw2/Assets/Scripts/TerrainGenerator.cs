@@ -27,12 +27,6 @@ public class TerrainGenerator : MonoBehaviour
     public TileBase Water;
     public TileBase City;
 
-
-    private void Start()
-    {
-        Generate();
-    }
-
     public void Generate()
     {
         if (!IsGenerating)
@@ -89,6 +83,11 @@ public class TerrainGenerator : MonoBehaviour
                 {
                     heights[index] = 0.5f;
                     terrain[index] = Terrain.Land;
+                }
+                else if (tile == City)
+                {
+                    heights[index] = 0.5f;
+                    terrain[index] = Terrain.City;
                 }
                 else if (tile == Water)
                 {
