@@ -3,7 +3,11 @@ public enum Biome
     None,
     Grass,
     Water,
-    City,
+    PlayerCity,
+    EnemyCity,
     Mountain,
-    Beach
+    Beach,
+    Rock,
+    Crystal,
+    Forest,
 }

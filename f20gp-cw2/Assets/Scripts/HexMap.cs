@@ -13,6 +13,7 @@ public class HexMap : MonoBehaviour
 
     [Header("Grid display settings")]
     [Min(0)] public float HeightOffset = 1.0f;
+    public BiomeSettings BiomeSettings;
 
     public Dictionary<Vector3Int, Hexagon> Hexagons { get; protected set; } = new Dictionary<Vector3Int, Hexagon>();
 
@@ -46,19 +47,19 @@ public class HexMap : MonoBehaviour
 
     public void GenerateMeshFromHexagons()
     {
-        Dictionary<float, List<CombineInstance>> terrainLayers = new Dictionary<float, List<CombineInstance>>();
+        Dictionary<Biome, List<CombineInstance>> terrainLayers = new Dictionary<Biome, List<CombineInstance>>();
 
         // Calculate meshes for layer of the terrain
         foreach (KeyValuePair<Vector3Int, Hexagon> h in Hexagons)
         {
             // Ensure that the entry exists
-            if (!terrainLayers.ContainsKey(h.Value.Height))
+            if (!terrainLayers.ContainsKey(h.Value.Biome))
             {
-                terrainLayers[h.Value.Height] = new List<CombineInstance>();
+                terrainLayers[h.Value.Biome] = new List<CombineInstance>();
             }
 
             // Add the face of the hexagon
-            terrainLayers[h.Value.Height].Add(new CombineInstance() { mesh = h.Value.GenerateFaceMesh(), transform = transform.worldToLocalMatrix });
+            terrainLayers[h.Value.Biome].Add(new CombineInstance() { mesh = h.Value.GenerateFaceMesh(), transform = transform.worldToLocalMatrix });
 
             // Add all edges of this hexagon
             List<Hexagon> neighbours = new List<Hexagon>();
@@ -67,17 +68,17 @@ public class HexMap : MonoBehaviour
                 if (Hexagons.ContainsKey(neighbour.Item1) && h.Value.CentreOfFaceWorld.y > Hexagons[neighbour.Item1].CentreOfFaceWorld.y)
                 {
                     Mesh edge = h.Value.GenerateMeshEdgeForNeighbour(Hexagons[neighbour.Item1], neighbour.Item2);
-                    terrainLayers[h.Value.Height].Add(new CombineInstance() { mesh = edge, transform = transform.worldToLocalMatrix });
+                    terrainLayers[h.Value.Biome].Add(new CombineInstance() { mesh = edge, transform = transform.worldToLocalMatrix });
                 }
             }
         }
 
         // Loop through all terrain layers and combine them into a single mesh
-        foreach (float height in terrainLayers.Keys)
+        foreach (Biome biome in terrainLayers.Keys)
         {
             // Combine all the meshes for this layer
             Mesh m = new Mesh();
-            m.CombineMeshes(terrainLayers[height].ToArray(), true);
+            m.CombineMeshes(terrainLayers[biome].ToArray(), true);
 
             // Optimise the mesh
             m.RecalculateNormals();
@@ -87,7 +88,7 @@ public class HexMap : MonoBehaviour
 
             // Instantiate the mesh in the scene
             GameObject g = Instantiate(TerrainLayerPrefab, TerrainParent);
-            g.name = height.ToString();
+            g.name = biome.ToString();
 
             g.GetComponent<MeshFilter>().sharedMesh = m;
 
@@ -95,7 +96,7 @@ public class HexMap : MonoBehaviour
 
             MeshRenderer r = g.GetComponent<MeshRenderer>();
             r.material = GroundMaterial;
-            r.material.SetFloat("Height", height);
+            r.material.color = BiomeSettings.GetBiomeColour(biome);
         }
     }
 
@@ -103,7 +104,7 @@ public class HexMap : MonoBehaviour
     {
         public readonly float Height;
         public readonly Vector3 CentreOfFaceWorld;
-        public Biome TerrainType;
+        public Biome Biome;
 
         // Positions of the face vertexes in world space
         // NOTE: our hexagon's aren't mathematically correct as they use the Unity hex grid for positioning
@@ -114,11 +115,11 @@ public class HexMap : MonoBehaviour
         public Vector3 BottomLeftVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
         public Vector3 BottomRightVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
 
-        public Hexagon(float height, Vector3 centreOfFaceWorld, Biome terrain)
+        public Hexagon(float height, Vector3 centreOfFaceWorld, Biome biome)
         {
             Height = height;
             CentreOfFaceWorld = centreOfFaceWorld;
-            TerrainType = terrain;
+            Biome = biome;
         }
 
         public enum NeighbourDirection

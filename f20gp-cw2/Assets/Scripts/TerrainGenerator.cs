@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -10,10 +12,13 @@ public class TerrainGenerator : MonoBehaviour
     public bool IsGenerating { get; private set; } = false;
 
     [Header("Noise generation settings")]
-    public Noise.PerlinSettings Settings;
+    public Noise.PerlinSettings NoiseSettings;
     public AnimationCurve HeightCurve;
     [Min(1)]
     public int NumberOfTerraces = 6;
+
+    [Header("Biome settings")]
+    public TerrainSettings TerrainSettings;
 
     [Space]
     public int Seed = 0;
@@ -24,18 +29,16 @@ public class TerrainGenerator : MonoBehaviour
 
     public TileBase Land;
     public TileBase AlwaysLand;
-    public TileBase Water;
-    public TileBase City;
-
-    [Space]
-    public float BeachThreshold = 0.25f;
-    public float MountainThreshold = 0.75f;
+    public TileBase OutOfBounds;
+    public TileBase PlayerCity;
+    public TileBase EnemyCity;
 
     private enum Terrain
     {
+        None,
         Land,
-        Water,
-        City
+        PlayerCity,
+        EnemyCity
     }
 
     public void Generate()
@@ -56,11 +59,13 @@ public class TerrainGenerator : MonoBehaviour
     {
         DateTime before = DateTime.Now;
 
-        // Reset the whole HexMap
         HexMap.Clear();
-
-        Settings.ValidateValues();
         TileTypes.CompressBounds();
+
+        NoiseSettings.ValidateValues();
+        TerrainSettings.ValidateValues();
+
+        System.Random r = new System.Random(seed);
 
         int width = TileTypes.cellBounds.xMax - TileTypes.cellBounds.xMin;
         int height = TileTypes.cellBounds.yMax - TileTypes.cellBounds.yMin;
@@ -82,12 +87,12 @@ public class TerrainGenerator : MonoBehaviour
 
                 positions[index] = position;
                 heights[index] = 0.0f;
-                terrain[index] = Terrain.Water;
+                terrain[index] = Terrain.None;
 
                 if (tile == Land)
                 {
                     Vector3 samplePoint = TileTypes.layoutGrid.GetCellCenterWorld(position);
-                    heights[index] = Noise.Perlin(Settings, seed, new Vector2(samplePoint.x, samplePoint.z));
+                    heights[index] = Noise.Perlin(NoiseSettings, seed, new Vector2(samplePoint.x, samplePoint.z));
                     terrain[index] = Terrain.Land;
                 }
                 else if (tile == AlwaysLand)
@@ -95,30 +100,49 @@ public class TerrainGenerator : MonoBehaviour
                     heights[index] = 0.5f;
                     terrain[index] = Terrain.Land;
                 }
-                else if (tile == City)
+                else if (tile == PlayerCity)
                 {
                     heights[index] = 0.5f;
-                    terrain[index] = Terrain.City;
+                    terrain[index] = Terrain.PlayerCity;
                 }
-                else if (tile == Water)
+                else if (tile == EnemyCity)
+                {
+                    // Should be a city here
+                    if (r.NextDouble() < TerrainSettings.EnemyCityChance)
+                    {
+                        heights[index] = 0.5f;
+                        terrain[index] = Terrain.EnemyCity;
+                    }
+                    // Otherwise just do normal terrain
+                    else
+                    {
+                        Vector3 samplePoint = TileTypes.layoutGrid.GetCellCenterWorld(position);
+                        heights[index] = Noise.Perlin(NoiseSettings, seed, new Vector2(samplePoint.x, samplePoint.z));
+                        terrain[index] = Terrain.Land;
+                    }
+                }
+                else if (tile == OutOfBounds)
                 {
                     heights[index] = 0.0f;
-                    terrain[index] = Terrain.Water;
+                    terrain[index] = Terrain.None;
                 }
                 else
                 {
-                    Debug.Log("Missing case for tile type island generation");
+                    Debug.LogError("Missing case for tile type island generation");
                     continue;
                 }
 
-                if (heights[index] > max)
+                if (terrain[index] != Terrain.None)
                 {
-                    max = heights[index];
-                }
+                    if (heights[index] > max)
+                    {
+                        max = heights[index];
+                    }
 
-                if (heights[index] < min)
-                {
-                    min = heights[index];
+                    if (heights[index] < min)
+                    {
+                        min = heights[index];
+                    }
                 }
             }
         }
@@ -151,21 +175,17 @@ public class TerrainGenerator : MonoBehaviour
     {
         switch (terrain)
         {
+            case Terrain.None:
+                return Biome.None;
             case Terrain.Land:
-                if (normalisedHeight < BeachThreshold)
-                    return Biome.Beach;
-                else if (normalisedHeight > MountainThreshold)
-                    return Biome.Mountain;
-                else
-                    return Biome.Grass;
-            case Terrain.Water:
-                return Biome.Water;
-            case Terrain.City:
-                return Biome.City;
+                return TerrainSettings.GetBiomeForHeight(normalisedHeight);
+            case Terrain.PlayerCity:
+                return Biome.PlayerCity;
+            case Terrain.EnemyCity:
+                return Biome.EnemyCity;
             default:
-                return Biome.Water;
+                return Biome.None;
         }
     }
-
 
 }

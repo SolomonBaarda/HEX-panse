@@ -5,7 +5,7 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [Range(2, 6)]
-    public int NumberOfPlayers = 6;
+    public uint NumberOfPlayers = 6;
 
     public int PlayerTurn;
 
@@ -26,6 +26,10 @@ public class GameManager : MonoBehaviour
     public Transform GameObjectPrent;
     public GameObject CityPrefab;
 
+    [Header("Players")]
+    public List<Player> Players = new List<Player>();
+    public PlayerSettings PlayerSettings;
+
     private void Start()
     {
         StartCoroutine(StartGame());
@@ -40,18 +44,25 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
+        List<Vector3Int> cities = new List<Vector3Int>();
+
         foreach (KeyValuePair<Vector3Int, HexMap.Hexagon> hex in HexMap.Hexagons)
         {
-            if (hex.Value.TerrainType is Biome.City)
+            if (hex.Value.Biome is Biome.PlayerCity)
             {
-                Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
+                cities.Add(hex.Key);
+                //Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
+            }
+            else if(hex.Value.Biome is Biome.EnemyCity)
+            {
+                //Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
             }
         }
 
-/*        while (true)
+        for (uint i = 0; i < NumberOfPlayers; i++)
         {
-            yield return null;
-        }*/
+            Players.Add(new Player(i, PlayerSettings.GetPlayerColour(i)));
+        }
     }
 
     private void Update()
@@ -67,7 +78,7 @@ public class GameManager : MonoBehaviour
             if (Physics.Raycast(ray, out RaycastHit hit, MouseRaycastDistance, MouseLayerMask))
             {
                 Vector3Int cell = HexMap.Grid.WorldToCell(new Vector3(hit.point.x, 0, hit.point.z));
-                if (HexMap.Hexagons.ContainsKey(cell))
+                if (HexMap.Hexagons.ContainsKey(cell) && HexMap.Hexagons[cell].Biome != Biome.None)
                 {
                     IsHoveringOverCell = true;
                     CellHoveringOver = cell;
@@ -82,7 +93,19 @@ public class GameManager : MonoBehaviour
         HoverCellPreview.gameObject.SetActive(IsHoveringOverCell);
     }
 
-    private void OnDrawGizmos()
+    public class Player
+    {
+        public readonly uint ID;
+        public Color Colour;
+
+        public Player(uint id, Color colour)
+        {
+            ID = id;
+            Colour = colour;
+        }
+    }
+
+    private void OnDrawGizmosSelected()
     {
         if (IsHoveringOverCell)
         {
