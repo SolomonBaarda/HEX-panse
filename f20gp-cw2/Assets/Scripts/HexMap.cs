@@ -140,6 +140,26 @@ public class HexMap : MonoBehaviour
 
         public Terrain TerrainType;
 
+
+
+
+        // Don't use this as our hexagons aren't EXACTLY mathematically perfect, but good enough for the grid
+        /*
+        float sqrt3 = Mathf.Sqrt(3);
+        float xOffset = (sqrt3 * HexagonEdgeLength) / 2;
+        */
+
+        public Vector3 TopFaceVertex => CentreOfFaceWorld + new Vector3(0, 0, HexagonEdgeLength);
+        public Vector3 BottomFaceVertex => CentreOfFaceWorld + new Vector3(0, 0, -HexagonEdgeLength);
+
+        public Vector3 TopLeftFaceVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, HexagonEdgeLength / 2);
+        public Vector3 TopRightFaceVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, HexagonEdgeLength / 2);
+
+        public Vector3 BottomLeftFaceVertex => CentreOfFaceWorld + new Vector3(-HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
+        public Vector3 BottomRightFaceVertex => CentreOfFaceWorld + new Vector3(HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
+
+
+
         public HexagonMesh(Vector3Int cell, Vector3 centreOfFace, float heightMultiplier, Terrain terrainType)
         {
             Cell = cell;
@@ -148,33 +168,17 @@ public class HexMap : MonoBehaviour
             TerrainType = terrainType;
             CentreOfFaceWorld = centreOfFace;
 
-            Face = GenerateFaceMesh(centreOfFace);
+            Face = GenerateFaceMesh();
         }
 
 
-        private Mesh GenerateFaceMesh(Vector3 centreOfFace)
+        private Mesh GenerateFaceMesh()
         {
-            // Don't use this as our hexagons aren't EXACTLY mathematically perfect, but good enough for the grid
-            /*
-            float sqrt3 = Mathf.Sqrt(3);
-            float xOffset = (sqrt3 * HexagonEdgeLength) / 2;
-            */
-
-            // Get the positions of the vertices of the face of the hex
-            Vector3 top = centreOfFace + new Vector3(0, 0, HexagonEdgeLength);
-            Vector3 bottom = centreOfFace + new Vector3(0, 0, -HexagonEdgeLength);
-
-            Vector3 topLeft = centreOfFace + new Vector3(-HexagonEdgeLength, 0, HexagonEdgeLength / 2);
-            Vector3 topRight = centreOfFace + new Vector3(HexagonEdgeLength, 0, HexagonEdgeLength / 2);
-
-            Vector3 bottomLeft = centreOfFace + new Vector3(-HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
-            Vector3 bottomRight = centreOfFace + new Vector3(HexagonEdgeLength, 0, -HexagonEdgeLength / 2);
-
             // Create the mesh
             Mesh m = new Mesh
             {
                 // Add vertices
-                vertices = new Vector3[] { top, topRight, bottomRight, bottom, bottomLeft, topLeft, centreOfFace },
+                vertices = new Vector3[] { TopFaceVertex, TopRightFaceVertex, BottomRightFaceVertex, BottomFaceVertex, BottomLeftFaceVertex, TopLeftFaceVertex, CentreOfFaceWorld },
                 // Add the triangles of the mesh
                 triangles = new int[]
                 {
