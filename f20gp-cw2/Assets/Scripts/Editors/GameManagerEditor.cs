@@ -4,22 +4,23 @@ using UnityEngine;
 using UnityEditor;
 
 
-[CustomEditor(typeof(TerrainGenerator))]
-public class TerrainGeneratorEditor : Editor
+[CustomEditor(typeof(GameManager))]
+public class GameManagerEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        TerrainGenerator t = (TerrainGenerator)target;
+        GameManager t = (GameManager)target;
         DrawDefaultInspector();
 
-        if (Application.isPlaying && GUILayout.Button("Generate"))
+        if (Application.isPlaying && GUILayout.Button("Restart"))
         {
-            t.Generate();
+            t.Clear();
+            t.StartGame();
         }
 
         if (Application.isPlaying && GUILayout.Button("Clear"))
         {
-            t.HexMap.Clear();
+            t.Clear();
         }
     }
 }

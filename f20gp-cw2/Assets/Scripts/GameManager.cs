@@ -27,42 +27,103 @@ public class GameManager : MonoBehaviour
     public GameObject CityPrefab;
 
     [Header("Players")]
-    public List<Player> Players = new List<Player>();
     public PlayerSettings PlayerSettings;
+    List<Player> Players = new List<Player>();
+
+    List<Vector3Int> EnemyCities = new List<Vector3Int>();
+
+    Dictionary<Vector3Int, GameObject> GameObjects = new Dictionary<Vector3Int, GameObject>();
 
     private void Start()
     {
-        StartCoroutine(StartGame());
+        StartGame();
     }
 
-    public IEnumerator StartGame()
+    public void Clear()
+    {
+        StopAllCoroutines();
+
+        foreach (KeyValuePair<Vector3Int, GameObject> pair in GameObjects)
+        {
+            Destroy(pair.Value);
+        }
+
+        HexMap.Clear();
+        GameObjects.Clear();
+        EnemyCities.Clear();
+        Players.Clear();
+    }
+
+    public void StartGame()
+    {
+        StartCoroutine(WaitForStartGame());
+    }
+
+    private IEnumerator WaitForStartGame()
     {
         TerrainGenerator.Generate();
 
-        while(TerrainGenerator.IsGenerating)
+        while (TerrainGenerator.IsGenerating)
         {
             yield return null;
         }
+
+        System.Random r = new System.Random(TerrainGenerator.Seed);
 
         List<Vector3Int> cities = new List<Vector3Int>();
 
         foreach (KeyValuePair<Vector3Int, HexMap.Hexagon> hex in HexMap.Hexagons)
         {
+            // Instantiate city prefabs
             if (hex.Value.Biome is Biome.PlayerCity)
             {
                 cities.Add(hex.Key);
-                //Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
+                GameObjects[hex.Key] = Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
             }
-            else if(hex.Value.Biome is Biome.EnemyCity)
+            else if (hex.Value.Biome is Biome.EnemyCity)
             {
-                //Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
+                EnemyCities.Add(hex.Key);
+                GameObjects[hex.Key] = Instantiate(CityPrefab, hex.Value.CentreOfFaceWorld, Quaternion.identity, GameObjectPrent);
             }
+        }
+
+        // Choose player starting positions
+        switch (cities.Count)
+        {
+            case 2:
+                break;
+            case 3:
+                break;
+            case 4:
+                break;
+            default:
+                // Shuffle the list of player cities
+                int n = cities.Count;
+                while (n > 1)
+                {
+                    n--;
+                    int k = r.Next(n + 1);
+                    Vector3Int value = cities[k];
+                    cities[k] = cities[n];
+                    cities[n] = value;
+                }
+                break;
         }
 
         for (uint i = 0; i < NumberOfPlayers; i++)
         {
-            Players.Add(new Player(i, PlayerSettings.GetPlayerColour(i)));
+            Vector3Int city = cities[0];
+            cities.RemoveAt(0);
+            Player player = new Player(i, PlayerSettings.GetPlayerColour(i), city);
+            Players.Add(player);
+
+            GameObject model = GameObjects[city];
+            model.GetComponent<MeshRenderer>().material.color = player.Colour;
         }
+
+        EnemyCities.AddRange(cities);
+
+        Debug.Log($"Playing with {Players.Count} players and {EnemyCities.Count} enemies");
     }
 
     private void Update()
@@ -96,12 +157,16 @@ public class GameManager : MonoBehaviour
     public class Player
     {
         public readonly uint ID;
-        public Color Colour;
+        public readonly Color Colour;
 
-        public Player(uint id, Color colour)
+        public readonly List<Vector3Int> ControlledCities = new List<Vector3Int>();
+
+        public Player(uint id, Color colour, Vector3Int startingCity)
         {
             ID = id;
             Colour = colour;
+
+            ControlledCities.Add(startingCity);
         }
     }
 
