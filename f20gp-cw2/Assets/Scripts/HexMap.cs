@@ -45,6 +45,21 @@ public class HexMap : MonoBehaviour
         Hexagons[cell] = new Hexagon(height, centreOfFaceWorld, type);
     }
 
+    public List<Vector3Int> CalculateAllExistingNeighbours(Vector3Int cell)
+    {
+        List<Vector3Int> neighbours = new List<Vector3Int>();
+
+        foreach ((Vector3Int, Hexagon.NeighbourDirection) neighbour in Hexagon.CalculateAllPossibleNeighbourCells(cell))
+        {
+            if (Hexagons.ContainsKey(neighbour.Item1))
+            {
+                neighbours.Add(neighbour.Item1);
+            }
+        }
+
+        return neighbours;
+    }
+
     public void GenerateMeshFromHexagons()
     {
         Dictionary<Biome, List<CombineInstance>> terrainLayers = new Dictionary<Biome, List<CombineInstance>>();
