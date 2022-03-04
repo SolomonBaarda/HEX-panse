@@ -23,7 +23,6 @@ public class GameManager : MonoBehaviour
     [Header("Terrain Stuff")]
     public TerrainGenerator TerrainGenerator;
     public HexMap HexMap;
-    float heightBetweenEachTerrace;
 
     [Header("Game Objects")]
     public Transform GameObjectParent;
@@ -78,12 +77,15 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator PlayGame()
     {
-        AsyncOperation load = SceneManager.LoadSceneAsync("HUD", LoadSceneMode.Additive);
-
-        // Wait for HUD to load
-        while (!load.isDone)
+        if(HUD.Instance == null)
         {
-            yield return null;
+            AsyncOperation load = SceneManager.LoadSceneAsync("HUD", LoadSceneMode.Additive);
+
+            // Wait for HUD to load
+            while (!load.isDone)
+            {
+                yield return null;
+            }
         }
 
         TerrainGenerator.Generate();
@@ -93,8 +95,6 @@ public class GameManager : MonoBehaviour
         {
             yield return null;
         }
-
-        heightBetweenEachTerrace = 1.0f / TerrainGenerator.NumberOfTerraces;
 
         System.Random r = new System.Random(TerrainGenerator.Seed);
 
@@ -174,7 +174,6 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log($"Playing with {Players.Count} players and {enemyCities.Count} enemies");
-        Debug.Log($"Height between each terrace {heightBetweenEachTerrace}");
 
 
         while (true)
@@ -197,6 +196,12 @@ public class GameManager : MonoBehaviour
 
                 HUD.Instance.PlayerTurnText.text = $"Current turn: player {PlayerTurn}";
                 HUD.Instance.PlayerTurnText.color = p.Colour;
+
+                if(currentPlayer.ValidMovesThisTurn.Count == 0)
+                {
+                    Debug.LogError($"Player {currentPlayer.ID} can't make any moves. Skipping turn");
+                    currentPlayer = null;
+                }
 
                 // Wait here while it is this players turn
                 while (currentPlayer == p)
@@ -244,7 +249,7 @@ public class GameManager : MonoBehaviour
         {
             return HexMap.CalculateAllExistingNeighbours(cell)
                 .Where((x) => HexMap.Hexagons[x].Biome != Biome.None && x != cell &&
-                Mathf.Abs(HexMap.Hexagons[cell].Height - HexMap.Hexagons[x].Height) <= heightBetweenEachTerrace &&
+                Mathf.Abs(HexMap.Hexagons[cell].Height - HexMap.Hexagons[x].Height) <= TerrainGenerator.HeightBetweenEachTerrace &&
                 !Players.Any(player => player.CurrentCell == x));
         }
 

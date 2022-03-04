@@ -16,6 +16,7 @@ public class TerrainGenerator : MonoBehaviour
     public AnimationCurve HeightCurve;
     [Min(1)]
     public int NumberOfTerraces = 6;
+    public float HeightBetweenEachTerrace => 1.0f / NumberOfTerraces;
 
     [Header("Biome settings")]
     public TerrainSettings TerrainSettings;
@@ -36,6 +37,7 @@ public class TerrainGenerator : MonoBehaviour
     private enum Terrain
     {
         None,
+        LandOrNone,
         Land,
         PlayerCity,
         EnemyCity
@@ -89,41 +91,38 @@ public class TerrainGenerator : MonoBehaviour
                 heights[index] = 0.0f;
                 terrain[index] = Terrain.None;
 
-                if (tile == Land)
+                float CalculateHeight()
                 {
                     Vector3 samplePoint = TileTypes.layoutGrid.GetCellCenterWorld(position);
-                    heights[index] = Noise.Perlin(NoiseSettings, seed, new Vector2(samplePoint.x, samplePoint.z));
-                    terrain[index] = Terrain.Land;
+                    float height = Noise.Perlin(NoiseSettings, seed, new Vector2(samplePoint.x, samplePoint.z));
+                    return height;
+                }
+
+                if (tile == Land)
+                {
+                    heights[index] = CalculateHeight();
+                    terrain[index] = Terrain.LandOrNone;
                 }
                 else if (tile == AlwaysLand)
                 {
-                    heights[index] = 0.5f;
+                    heights[index] = CalculateHeight();
                     terrain[index] = Terrain.Land;
                 }
                 else if (tile == PlayerCity)
                 {
-                    heights[index] = 0.5f;
+                    heights[index] = CalculateHeight();
                     terrain[index] = Terrain.PlayerCity;
                 }
                 else if (tile == EnemyCity)
                 {
-                    // Should be a city here
-                    if (r.NextDouble() < TerrainSettings.EnemyCityChance)
-                    {
-                        heights[index] = 0.5f;
-                        terrain[index] = Terrain.EnemyCity;
-                    }
-                    // Otherwise just do normal terrain
-                    else
-                    {
-                        Vector3 samplePoint = TileTypes.layoutGrid.GetCellCenterWorld(position);
-                        heights[index] = Noise.Perlin(NoiseSettings, seed, new Vector2(samplePoint.x, samplePoint.z));
-                        terrain[index] = Terrain.Land;
-                    }
+                    heights[index] = CalculateHeight();
+
+                    // Do a dice roll to decide if there is a city here
+                    terrain[index] = r.NextDouble() < TerrainSettings.EnemyCityChance ? Terrain.EnemyCity : Terrain.LandOrNone;
                 }
                 else if (tile == OutOfBounds)
                 {
-                    heights[index] = 0.0f;
+                    heights[index] = 0f;
                     terrain[index] = Terrain.None;
                 }
                 else
@@ -157,6 +156,11 @@ public class TerrainGenerator : MonoBehaviour
             // Then round values so that they appear as terraces
             heights[i] = (float)Mathf.RoundToInt(heights[i] * NumberOfTerraces) / NumberOfTerraces;
 
+            if(terrain[i] == Terrain.Land || terrain[i] == Terrain.EnemyCity || terrain[i] == Terrain.PlayerCity)
+            {
+                heights[i] = Mathf.Clamp(heights[i], HeightBetweenEachTerrace, 1.0f);
+            }
+
             // Add the hexagon to the map
             HexMap.AddHexagon(positions[i], heights[i], CalculateBiome(heights[i], terrain[i]));
         }
@@ -177,12 +181,15 @@ public class TerrainGenerator : MonoBehaviour
         {
             case Terrain.None:
                 return Biome.None;
+            case Terrain.LandOrNone:
+                return TerrainSettings.GetBiomeForHeight(normalisedHeight);
             case Terrain.Land:
                 return TerrainSettings.GetBiomeForHeight(normalisedHeight);
             case Terrain.PlayerCity:
                 return Biome.PlayerCity;
             case Terrain.EnemyCity:
                 return Biome.EnemyCity;
+
             default:
                 return Biome.None;
         }
