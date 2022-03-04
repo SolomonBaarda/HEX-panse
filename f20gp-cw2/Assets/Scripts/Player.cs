@@ -6,8 +6,6 @@ using UnityEngine;
 [RequireComponent(typeof(Renderer))]
 public class Player : MonoBehaviour
 {
-    public const int MaxMovementPerTurn = 2;
-
     public uint ID;
     public Color Colour;
 

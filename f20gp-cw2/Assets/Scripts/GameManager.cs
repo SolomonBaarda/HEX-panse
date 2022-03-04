@@ -234,6 +234,31 @@ public class GameManager : MonoBehaviour
         player.transform.position = HexMap.Hexagons[cell].CentreOfFaceWorld;
         player.CurrentCell = cell;
 
+        if(HexMap.Hexagons[cell].Biome == Biome.PlayerCity || HexMap.Hexagons[cell].Biome == Biome.EnemyCity)
+        {
+            foreach(City city in Cities)
+            {
+                if(city.Cell == cell)
+                {
+                    switch (city.Type)
+                    {
+                        // Empty city, player can capture it
+                        case City.CityType.Empty:
+                            city.PlayerCaptureCity(player);
+                            break;
+                        case City.CityType.Enemy:
+                            city.PlayerCaptureCity(player);
+                            break;
+                        case City.CityType.Player:
+                            city.PlayerCaptureCity(player);
+                            break;
+                    }
+
+                    break;
+                }
+            }
+        }
+
         currentPlayer = null;
 
         // Hide previews etc
@@ -248,14 +273,17 @@ public class GameManager : MonoBehaviour
         IEnumerable<Vector3Int> GetMoves(Vector3Int cell)
         {
             return HexMap.CalculateAllExistingNeighbours(cell)
-                .Where((x) => HexMap.Hexagons[x].Biome != Biome.None && x != cell &&
-                Mathf.Abs(HexMap.Hexagons[cell].Height - HexMap.Hexagons[x].Height) <= TerrainGenerator.HeightBetweenEachTerrace &&
-                !Players.Any(player => player.CurrentCell == x));
+                .Where((x) => 
+                    HexMap.Hexagons[x].Biome != Biome.None && 
+                    x != cell &&
+                    Mathf.Abs(Mathf.Abs(HexMap.Hexagons[cell].Height) - Mathf.Abs(HexMap.Hexagons[x].Height)) <= TerrainGenerator.HeightBetweenEachTerrace + (TerrainGenerator.HeightBetweenEachTerrace / 2.0f) &&
+                    !Players.Any(player => player.CurrentCell == x)
+                );
         }
 
         HashSet<Vector3Int> all = new HashSet<Vector3Int>(GetMoves(current.CurrentCell));
 
-        for (int i = 1; i < Player.MaxMovementPerTurn; i++)
+        for (int i = 1; i < TerrainGenerator.TerrainSettings.MaxPlayerMovementPerTurn; i++)
         {
             HashSet<Vector3Int> allCopy = new HashSet<Vector3Int>(all);
 

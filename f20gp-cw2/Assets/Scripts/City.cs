@@ -31,6 +31,14 @@ public class City : MonoBehaviour
         }
     }
 
+    public void PlayerCaptureCity(Player player)
+    {
+        Type = CityType.Player;
+        OwnedBy = player;
+
+        renderer.material.color = OwnedBy.Colour;
+    }
+
     public enum CityType
     {
         Empty,

@@ -156,7 +156,7 @@ public class TerrainGenerator : MonoBehaviour
             // Then round values so that they appear as terraces
             heights[i] = (float)Mathf.RoundToInt(heights[i] * NumberOfTerraces) / NumberOfTerraces;
 
-            if(terrain[i] == Terrain.Land || terrain[i] == Terrain.EnemyCity || terrain[i] == Terrain.PlayerCity)
+            if (terrain[i] == Terrain.Land || terrain[i] == Terrain.EnemyCity || terrain[i] == Terrain.PlayerCity)
             {
                 heights[i] = Mathf.Clamp(heights[i], HeightBetweenEachTerrace, 1.0f);
             }
@@ -189,7 +189,6 @@ public class TerrainGenerator : MonoBehaviour
                 return Biome.PlayerCity;
             case Terrain.EnemyCity:
                 return Biome.EnemyCity;
-
             default:
                 return Biome.None;
         }

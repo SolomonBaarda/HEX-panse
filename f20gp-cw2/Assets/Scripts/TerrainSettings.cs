@@ -18,6 +18,10 @@ public class TerrainSettings : ScriptableObject
     public int InitialEnemyStrengthMin = 3;
     public int InitialEnemyStrengthMax = 7;
 
+    [Space]
+    [Min(1)]
+    public int MaxPlayerMovementPerTurn = 2;
+
     [System.Serializable]
     public class TerrainLayerSetting
     {
