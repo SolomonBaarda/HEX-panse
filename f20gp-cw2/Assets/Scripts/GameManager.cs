@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour
     [Header("Terrain Stuff")]
     public TerrainGenerator TerrainGenerator;
     public HexMap HexMap;
+    float heightBetweenEachTerrace;
 
     [Header("Game Objects")]
     public Transform GameObjectParent;
@@ -38,8 +39,6 @@ public class GameManager : MonoBehaviour
     List<Player> Players = new List<Player>();
     Player currentPlayer;
     List<City> Cities = new List<City>();
-
-
 
     private void Start()
     {
@@ -94,6 +93,8 @@ public class GameManager : MonoBehaviour
         {
             yield return null;
         }
+
+        heightBetweenEachTerrace = 1.0f / TerrainGenerator.NumberOfTerraces;
 
         System.Random r = new System.Random(TerrainGenerator.Seed);
 
@@ -173,13 +174,21 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log($"Playing with {Players.Count} players and {enemyCities.Count} enemies");
+        Debug.Log($"Height between each terrace {heightBetweenEachTerrace}");
 
 
         while (true)
         {
             foreach (Player p in Players)
             {
-                // Do player turn
+                // Set the position that the camera should try and move to
+                Vector3 playerPositionWorld = HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld;
+                CameraManager.CameraFollow.position = playerPositionWorld;
+                CameraManager.CameraLookAtPlayer.position = playerPositionWorld;
+
+                yield return new WaitForSeconds(2.0f);
+
+                // Update player turn
                 currentPlayer = p;
                 PlayerTurn = (int)p.ID;
 
@@ -188,9 +197,6 @@ public class GameManager : MonoBehaviour
 
                 HUD.Instance.PlayerTurnText.text = $"Current turn: player {PlayerTurn}";
                 HUD.Instance.PlayerTurnText.color = p.Colour;
-
-                // Set the position that the camera should try and move to
-                CameraManager.CameraFollow.position = HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld;
 
                 // Wait here while it is this players turn
                 while (currentPlayer == p)
@@ -224,6 +230,11 @@ public class GameManager : MonoBehaviour
         player.CurrentCell = cell;
 
         currentPlayer = null;
+
+        // Hide previews etc
+        UpdateValidMovesHighlight();
+        UpdateHoverHighlight();
+        HUD.Instance.PlayerTurnText.text = "";
     }
 
 
@@ -231,7 +242,10 @@ public class GameManager : MonoBehaviour
     {
         IEnumerable<Vector3Int> GetMoves(Vector3Int cell)
         {
-            return HexMap.CalculateAllExistingNeighbours(cell).Where((x) => HexMap.Hexagons[x].Biome != Biome.None && x != cell);
+            return HexMap.CalculateAllExistingNeighbours(cell)
+                .Where((x) => HexMap.Hexagons[x].Biome != Biome.None && x != cell &&
+                Mathf.Abs(HexMap.Hexagons[cell].Height - HexMap.Hexagons[x].Height) <= heightBetweenEachTerrace &&
+                !Players.Any(player => player.CurrentCell == x));
         }
 
         HashSet<Vector3Int> all = new HashSet<Vector3Int>(GetMoves(current.CurrentCell));
@@ -255,7 +269,7 @@ public class GameManager : MonoBehaviour
     {
         IsHoveringOverCell = false;
 
-        if (CameraManager.IsHoveringMouseOverTerrain(MouseRaycastDistance, MouseLayerMask, out Vector3 position))
+        if (currentPlayer != null && CameraManager.IsHoveringMouseOverTerrain(MouseRaycastDistance, MouseLayerMask, out Vector3 position))
         {
             Vector3Int cell = HexMap.Grid.WorldToCell(new Vector3(position.x, 0, position.z));
             if (HexMap.Hexagons.ContainsKey(cell) && currentPlayer.ValidMovesThisTurn.Contains(cell))
@@ -288,7 +302,7 @@ public class GameManager : MonoBehaviour
                 // No disabled previews that we can use
                 if (preview == null)
                 {
-                    preview = Instantiate(ValidMovePrefab, HoverPreviewParent).gameObject;
+                    preview = Instantiate(ValidMovePrefab, HoverPreviewParent);
                     AllValidMovePreviews.Add(preview);
                 }
 
@@ -303,10 +317,19 @@ public class GameManager : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        if (IsHoveringOverCell)
+        if (Application.isPlaying)
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawSphere(HexMap.Hexagons[CellHoveringOver].CentreOfFaceWorld, 0.25f);
+            if (IsHoveringOverCell)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawSphere(HexMap.Hexagons[CellHoveringOver].CentreOfFaceWorld, 0.25f);
+            }
+
+            foreach (Player p in Players)
+            {
+                Gizmos.color = p.Colour;
+                Gizmos.DrawRay(HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld, Vector3.up * 10);
+            }
         }
     }
 }

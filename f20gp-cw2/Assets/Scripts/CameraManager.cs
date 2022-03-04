@@ -12,7 +12,9 @@ public class CameraManager : MonoBehaviour
     public float CameraHeightOffGround = 3.0f;
     public float CameraDistanceFromCity = 1.0f;
 
-    public Transform CameraLookAt;
+    public Transform CameraLookAtPlayer;
+    public Transform CameraLookAtCentreMap;
+
     public Transform CameraFollow;
 
     public void SetupCameras(List<Vector3> cities)
@@ -42,7 +44,7 @@ public class CameraManager : MonoBehaviour
 
         CameraPath.m_Waypoints = waypoints;
 
-        CameraLookAt.position = centre;
+        CameraLookAtCentreMap.position = centre;
     }
 
     public bool IsHoveringMouseOverTerrain(float raycastDistance, LayerMask layermask, out Vector3 position)
