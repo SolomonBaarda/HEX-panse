@@ -151,15 +151,19 @@ public class GameManager : MonoBehaviour
 
             // Init player
             GameObject p = Instantiate(PlayerPrefab, HexMap.Hexagons[cityCell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
+            p.name = $"Player {i}";
             Player player = p.GetComponent<Player>();
-            player.Init(i, PlayerSettings.GetPlayerColour(i), cityCell);
+            player.Init(i, PlayerSettings.GetPlayerColour(i), cityCell, TerrainGenerator.TerrainSettings.InitialPlayerStrength);
             Players.Add(player);
 
             // Init player city
             GameObject c = Instantiate(CityPrefab, HexMap.Hexagons[cityCell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
             City city = c.GetComponent<City>();
-            city.Init(cityCell, City.CityType.Player, player);
+            city.Init(cityCell, 0);
             Cities.Add(city);
+
+            // Move the player into that city
+            city.PlayerCaptureCity(player);
         }
 
         enemyCities.AddRange(playerCities);
@@ -169,7 +173,7 @@ public class GameManager : MonoBehaviour
         {
             GameObject c = Instantiate(CityPrefab, HexMap.Hexagons[cell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
             City city = c.GetComponent<City>();
-            city.Init(cell, City.CityType.Enemy, null);
+            city.Init(cell, r.Next(TerrainGenerator.TerrainSettings.InitialEnemyStrengthMin, TerrainGenerator.TerrainSettings.InitialEnemyStrengthMax));
             Cities.Add(city);
         }
 
@@ -229,35 +233,51 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void MakeMove(Player player, Vector3Int cell)
+    private void MakeMove(Player player, Vector3Int destination)
     {
-        player.transform.position = HexMap.Hexagons[cell].CentreOfFaceWorld;
-        player.CurrentCell = cell;
-
-        if(HexMap.Hexagons[cell].Biome == Biome.PlayerCity || HexMap.Hexagons[cell].Biome == Biome.EnemyCity)
+        // Leave a city
+        if((HexMap.Hexagons[player.CurrentCell].Biome == Biome.PlayerCity || HexMap.Hexagons[player.CurrentCell].Biome == Biome.EnemyCity) && HexMap.Hexagons[destination].Biome != Biome.PlayerCity)
         {
-            foreach(City city in Cities)
+            foreach (City city in Cities)
             {
-                if(city.Cell == cell)
+                if (city.Cell == player.CurrentCell && city.OwnedBy == player)
                 {
-                    switch (city.Type)
-                    {
-                        // Empty city, player can capture it
-                        case City.CityType.Empty:
-                            city.PlayerCaptureCity(player);
-                            break;
-                        case City.CityType.Enemy:
-                            city.PlayerCaptureCity(player);
-                            break;
-                        case City.CityType.Player:
-                            city.PlayerCaptureCity(player);
-                            break;
-                    }
-
+                    city.PlayerLeaveCity(player, 1);
                     break;
                 }
             }
         }
+        // Enter a city
+        else if (HexMap.Hexagons[destination].Biome == Biome.PlayerCity || HexMap.Hexagons[destination].Biome == Biome.EnemyCity)
+        {
+            foreach(City city in Cities)
+            {
+                if(city.Cell == destination)
+                {
+                    // Owned by another player
+                    if(city.OwnedBy != null && city.OwnedBy != player)
+                    {
+                        city.PlayerCaptureCity(player);
+                    }
+                    // Owned by an enemy
+                    else if(city.Strength > 0)
+                    {
+                        city.PlayerCaptureCity(player);
+                    }
+                    // Unowned or owned by this player
+                    else
+                    {
+                        city.PlayerCaptureCity(player);
+                    }
+
+                    // Exit the for loop
+                    break;
+                }
+            }
+        }
+
+        player.transform.position = HexMap.Hexagons[destination].CentreOfFaceWorld;
+        player.CurrentCell = destination;
 
         currentPlayer = null;
 

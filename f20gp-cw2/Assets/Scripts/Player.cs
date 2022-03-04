@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 
 [RequireComponent(typeof(Renderer))]
@@ -8,28 +9,37 @@ public class Player : MonoBehaviour
 {
     public uint ID;
     public Color Colour;
-
     public Vector3Int CurrentCell;
+    public int Strength;
 
-    public readonly List<Vector3Int> ControlledCities = new List<Vector3Int>();
-
+    public HashSet<Vector3Int> ValidMovesThisTurn;
 
     new Renderer renderer;
 
-    public HashSet<Vector3Int> ValidMovesThisTurn;
+    [Space]
+    public TMP_Text StrengthText;
 
     private void Awake()
     {
         renderer = GetComponent<Renderer>();
     }
 
-    public void Init(uint id, Color colour, Vector3Int startingCity)
+    private void Update()
+    {
+        StrengthText.transform.rotation = Camera.main.transform.rotation;
+    }
+
+    public void UpdatePlayer()
+    {
+        StrengthText.text = $"strength: {Strength}";
+    }
+
+    public void Init(uint id, Color colour, Vector3Int startingCity, int strength)
     {
         ID = id;
         Colour = colour;
-
         CurrentCell = startingCity;
-        ControlledCities.Add(startingCity);
+        Strength = strength;
 
         renderer.material.color = colour;
     }
