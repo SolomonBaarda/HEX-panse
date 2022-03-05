@@ -3944,7 +3944,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Path: {fileID: 1137612142}
-  m_PathPosition: -435.2
+  m_PathPosition: -5233.2
   m_PositionUnits: 0
   m_PathOffset: {x: 0, y: 0, z: 0}
   m_XDamping: 3
@@ -4301,7 +4301,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -641302749
-  m_SortingLayer: 1
+  m_SortingLayer: -1
   m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 8b49d1af2593aca48885e5ac3a495b3d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0.78431374}
@@ -4473,7 +4473,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49df91dba4e53c543a4f78162f81ca06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NumberOfPlayers: 5
+  NumberOfPlayers: 2
   PlayerTurn: 0
   MouseLayerMask:
     serializedVersion: 2

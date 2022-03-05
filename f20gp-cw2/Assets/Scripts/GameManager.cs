@@ -257,12 +257,14 @@ public class GameManager : MonoBehaviour
                     // Owned by another player
                     if(city.OwnedBy != null && city.OwnedBy != player)
                     {
-                        city.PlayerCaptureCity(player);
+                        // TODO FIGHTING LOGIC
+                        //city.PlayerCaptureCity(player);
                     }
                     // Owned by an enemy
                     else if(city.Strength > 0)
                     {
-                        city.PlayerCaptureCity(player);
+                        // TODO FIGHTING LOGIC
+                        //city.PlayerCaptureCity(player);
                     }
                     // Unowned or owned by this player
                     else
@@ -287,6 +289,20 @@ public class GameManager : MonoBehaviour
         HUD.Instance.PlayerTurnText.text = "";
     }
 
+    private void FightForCity(uint cityStrength, uint attackerStrength, out uint newCityStrength, out uint newAttackerStrength)
+    {
+        int difference = Mathf.Abs((int)(cityStrength - attackerStrength));
+
+        // Fair fight
+        if(cityStrength == attackerStrength)
+        {
+
+        }
+
+        newCityStrength = 0;
+        newAttackerStrength = 0;
+    }
+
 
     private HashSet<Vector3Int> CalculateAllValidMovesForPlayer(Player current)
     {
@@ -297,7 +313,7 @@ public class GameManager : MonoBehaviour
                     HexMap.Hexagons[x].Biome != Biome.None && 
                     x != cell &&
                     Mathf.Abs(Mathf.Abs(HexMap.Hexagons[cell].Height) - Mathf.Abs(HexMap.Hexagons[x].Height)) <= TerrainGenerator.HeightBetweenEachTerrace + (TerrainGenerator.HeightBetweenEachTerrace / 2.0f) &&
-                    !Players.Any(player => player.CurrentCell == x)
+                    !Players.Any(player => player.CurrentCell == x && player.gameObject.activeSelf)
                 );
         }
 
