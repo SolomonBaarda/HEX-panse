@@ -4477,6 +4477,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   NumberOfPlayers: 2
   PlayerTurn: 0
+  GameTurn: 0
   MouseLayerMask:
     serializedVersion: 2
     m_Bits: 64
@@ -4570,7 +4571,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   NumberOfTerraces: 5
-  TerrainSettings: {fileID: 11400000, guid: d2b4a763aadae5a42b51cdd15b932437, type: 2}
+  TerrainSettings: {fileID: 11400000, guid: 6077d6d74abdbac4382efe927ceb998b, type: 2}
   Seed: 0
   DoRandomSeed: 0
   TileTypes: {fileID: 44788842}
@@ -4592,7 +4593,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   HeightOffset: 2
-  BiomeSettings: {fileID: 11400000, guid: 55ec67b6fad067a478aa44624c00878c, type: 2}
+  BiomeSettings: {fileID: 11400000, guid: 4a4b37ed4a5da9b43b36799d29b56821, type: 2}
   TerrainParent: {fileID: 1006054790}
   GroundMaterial: {fileID: 2100000, guid: fcb31d72e9f8675459a7d92fd2ef6493, type: 2}
   TerrainLayerPrefab: {fileID: 8524249256608546586, guid: fd9bf9f81dbaae347816f5b7a955b256, type: 3}

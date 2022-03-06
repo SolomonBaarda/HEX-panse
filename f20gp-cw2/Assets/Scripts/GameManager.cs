@@ -87,6 +87,8 @@ public class GameManager : MonoBehaviour
             {
                 yield return null;
             }
+
+            HUD.Instance.PlayerTurnText.text = "";
         }
 
         TerrainGenerator.Generate();
@@ -191,12 +193,19 @@ public class GameManager : MonoBehaviour
                 CameraManager.CameraLookAtPlayer.position = playerPositionWorld;
                 CameraManager.SetCameraModeAutomatic(true);
 
-
+                // Wait for the camera to move there
                 yield return new WaitForSeconds(2.0f);
 
                 // Update player turn
                 currentPlayer = p;
                 PlayerTurn = (int)p.ID;
+
+                // Reinforce each city
+                foreach(City c in Cities.Where(city => city.OwnedBy == p))
+                {
+                    c.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
+                    c.UpdateCity();
+                }
 
                 currentPlayer.ValidMovesThisTurn = CalculateAllValidMovesForPlayer(currentPlayer);
                 UpdateValidMovesHighlight();
@@ -267,10 +276,10 @@ public class GameManager : MonoBehaviour
             {
                 if (city.Cell == player.CurrentCell && city.OwnedBy == player)
                 {
+                    city.PlayerLeaveCity(player, 1);
                     move();
                     yield return new WaitForSeconds(turnDuration);
                     GameTurn = false;
-                    city.PlayerLeaveCity(player, 1);
                     break;
                 }
             }
