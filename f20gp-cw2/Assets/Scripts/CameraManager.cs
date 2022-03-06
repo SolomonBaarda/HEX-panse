@@ -6,6 +6,8 @@ using Cinemachine;
 public class CameraManager : MonoBehaviour
 {
     public Camera MainCamera;
+    public CinemachineVirtualCamera Camera;
+    CinemachineTrackedDolly Dolly;
 
     public CinemachineSmoothPath CameraPath;
 
@@ -16,6 +18,38 @@ public class CameraManager : MonoBehaviour
     public Transform CameraLookAtCentreMap;
 
     public Transform CameraFollow;
+
+    [Space]
+    public float ManualCameraSpeed = 0.1f;
+
+    private void Awake()
+    {
+        Dolly = Camera.GetCinemachineComponent<CinemachineTrackedDolly>();
+    }
+
+    private void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.Space))
+        {
+            SetCameraModeAutomatic(!Dolly.m_AutoDolly.m_Enabled);
+        }
+
+        if (!Dolly.m_AutoDolly.m_Enabled)
+        {
+            Dolly.m_PathPosition += Input.GetAxis("Horizontal") * ManualCameraSpeed * Time.deltaTime;
+        }
+    }
+
+    public enum CameraMode
+    {
+        Automatic,
+        Manual
+    }
+
+    public void SetCameraModeAutomatic(bool automatic)
+    {
+        Dolly.m_AutoDolly.m_Enabled = automatic;
+    }
 
     public void SetupCameras(List<Vector3> cities)
     {
@@ -29,7 +63,7 @@ public class CameraManager : MonoBehaviour
         CinemachineSmoothPath.Waypoint[] waypoints = new CinemachineSmoothPath.Waypoint[cities.Count];
 
         // Sort points so that thay are in clockwise order
-        cities.Sort((x, y) => Clockwise.Compare(x, y, centre));
+        cities.Sort((x, y) => -Clockwise.Compare(x, y, centre));
 
         // Add them as waypoints for the camera path
         for (int i = 0; i < cities.Count; i++)
