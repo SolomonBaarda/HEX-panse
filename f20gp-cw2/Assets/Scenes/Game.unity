@@ -3673,12 +3673,12 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 122895303}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 1861641831}
-  m_RootOrder: 0
+  m_Father: {fileID: 1943052024}
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &160625858
 GameObject:
@@ -4339,13 +4339,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1484178835}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1306106532}
-  m_Father: {fileID: 1861641831}
-  m_RootOrder: 1
+  m_Father: {fileID: 1943052024}
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1488704956
 GameObject:
@@ -4430,68 +4430,6 @@ MonoBehaviour:
   - target: {fileID: 709026037}
     weight: 1
     radius: 1
---- !u!1 &1861641830
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1861641831}
-  - component: {fileID: 1861641832}
-  m_Layer: 0
-  m_Name: Managers
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1861641831
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1861641830}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children:
-  - {fileID: 122895304}
-  - {fileID: 1484178836}
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1861641832
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1861641830}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49df91dba4e53c543a4f78162f81ca06, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  NumberOfPlayers: 2
-  PlayerTurn: 0
-  GameTurn: 0
-  MouseLayerMask:
-    serializedVersion: 2
-    m_Bits: 64
-  MouseRaycastDistance: 100
-  HoverCellPreview: {fileID: 1306106532}
-  CameraManager: {fileID: 83205441}
-  TerrainGenerator: {fileID: 1943052025}
-  HexMap: {fileID: 1943052026}
-  GameObjectParent: {fileID: 122895304}
-  PlayerPrefab: {fileID: 6645070351525085278, guid: 44f0844191384d24faa3e72c7ea149aa, type: 3}
-  CityPrefab: {fileID: 1061491997912404622, guid: 4c6e75fcd639b08499bb9f8fff466592, type: 3}
-  HoverPreviewParent: {fileID: 1484178836}
-  ValidMovePrefab: {fileID: 8268285654741817012, guid: 5ff5708f77390de42b090d4a382c4fc0, type: 3}
-  PlayerSettings: {fileID: 11400000, guid: 890026ca80923764e85aad9a85ce56df, type: 2}
 --- !u!1 &1943052023
 GameObject:
   m_ObjectHideFlags: 0
@@ -4504,8 +4442,9 @@ GameObject:
   - component: {fileID: 1943052027}
   - component: {fileID: 1943052026}
   - component: {fileID: 1943052025}
+  - component: {fileID: 1943052028}
   m_Layer: 0
-  m_Name: Hex Map
+  m_Name: Game Manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4524,8 +4463,10 @@ Transform:
   m_Children:
   - {fileID: 1006054790}
   - {fileID: 44788840}
+  - {fileID: 122895304}
+  - {fileID: 1484178836}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1943052025
 MonoBehaviour:
@@ -4572,7 +4513,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   NumberOfTerraces: 5
   TerrainSettings: {fileID: 11400000, guid: 6077d6d74abdbac4382efe927ceb998b, type: 2}
-  Seed: 0
+  Seed: 156170458
   DoRandomSeed: 0
   TileTypes: {fileID: 44788842}
   Land: {fileID: 11400000, guid: 206e4c6c491e853458a54f3a2f2b1e3e, type: 2}
@@ -4593,7 +4534,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   HeightOffset: 2
-  BiomeSettings: {fileID: 11400000, guid: 4a4b37ed4a5da9b43b36799d29b56821, type: 2}
+  BiomeSettings: {fileID: 11400000, guid: 825007e823039fd4899686ab543ceb16, type: 2}
   TerrainParent: {fileID: 1006054790}
   GroundMaterial: {fileID: 2100000, guid: fcb31d72e9f8675459a7d92fd2ef6493, type: 2}
   TerrainLayerPrefab: {fileID: 8524249256608546586, guid: fd9bf9f81dbaae347816f5b7a955b256, type: 3}
@@ -4609,3 +4550,32 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 1
   m_CellSwizzle: 1
+--- !u!114 &1943052028
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1943052023}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49df91dba4e53c543a4f78162f81ca06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NumberOfPlayers: 2
+  PlayerTurn: 0
+  GameTurn: 0
+  MouseLayerMask:
+    serializedVersion: 2
+    m_Bits: 64
+  MouseRaycastDistance: 100
+  HoverCellPreview: {fileID: 1306106532}
+  CameraManager: {fileID: 83205441}
+  TerrainGenerator: {fileID: 1943052025}
+  HexMap: {fileID: 1943052026}
+  GameObjectParent: {fileID: 122895304}
+  PlayerPrefab: {fileID: 6645070351525085278, guid: 44f0844191384d24faa3e72c7ea149aa, type: 3}
+  CityPrefab: {fileID: 1061491997912404622, guid: 4c6e75fcd639b08499bb9f8fff466592, type: 3}
+  HoverPreviewParent: {fileID: 1484178836}
+  ValidMovePrefab: {fileID: 8268285654741817012, guid: 5ff5708f77390de42b090d4a382c4fc0, type: 3}
+  PlayerSettings: {fileID: 11400000, guid: 890026ca80923764e85aad9a85ce56df, type: 2}

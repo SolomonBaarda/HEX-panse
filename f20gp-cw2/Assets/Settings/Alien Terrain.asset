@@ -19,8 +19,6 @@ MonoBehaviour:
     MaximumHeightThreshold: 0.2
   - Biome: 1
     MaximumHeightThreshold: 0.3
-  - Biome: 7
-    MaximumHeightThreshold: 0.5
   - Biome: 5
     MaximumHeightThreshold: 0.7
   - Biome: 3

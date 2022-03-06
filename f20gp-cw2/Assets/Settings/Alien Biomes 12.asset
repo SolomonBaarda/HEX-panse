@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0df9f19d5af62c64196d3f84355cd9d2, type: 3}
+  m_Name: Alien Biomes 12
+  m_EditorClassIdentifier: 
+  Biomes:
+  - Biome: 0
+    BiomeColour: {r: 0.76862746, g: 0.8392157, b: 0.6901961, a: 1}
+  - Biome: 4
+    BiomeColour: {r: 0.2784314, g: 0.4745098, b: 0.59607846, a: 1}
+  - Biome: 1
+    BiomeColour: {r: 0.16078432, g: 0.12156863, b: 0.11764706, a: 1}
+  - Biome: 5
+    BiomeColour: {r: 0.9647059, g: 0.2784314, b: 0.2509804, a: 1}
+  - Biome: 3
+    BiomeColour: {r: 0.6392157, g: 0.2, b: 0.23921569, a: 1}
