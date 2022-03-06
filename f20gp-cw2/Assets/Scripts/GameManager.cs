@@ -144,7 +144,8 @@ public class GameManager : MonoBehaviour
         }
 
 
-
+        HexMap.GenerateMeshFromHexagons();
+        yield return null;
 
         // Instantiate players and their city
         for (uint i = 0; i < NumberOfPlayers; i++)

@@ -43,6 +43,11 @@ public class TerrainGenerator : MonoBehaviour
         EnemyCity
     }
 
+    private void Awake()
+    {
+        TileTypes.GetComponent<TilemapRenderer>().enabled = false;
+    }
+
     public void Generate()
     {
         if (!IsGenerating)
@@ -164,12 +169,6 @@ public class TerrainGenerator : MonoBehaviour
             // Add the hexagon to the map
             HexMap.AddHexagon(positions[i], heights[i], CalculateBiome(heights[i], terrain[i]));
         }
-
-        yield return null;
-
-        HexMap.GenerateMeshFromHexagons();
-
-        TileTypes.GetComponent<TilemapRenderer>().enabled = false;
 
         Debug.Log("Generated in " + (DateTime.Now - before).TotalSeconds.ToString("0.0") + " seconds.");
         IsGenerating = false;
