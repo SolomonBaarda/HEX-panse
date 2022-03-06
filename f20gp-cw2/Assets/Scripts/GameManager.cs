@@ -107,12 +107,12 @@ public class GameManager : MonoBehaviour
 
         foreach (KeyValuePair<Vector3Int, HexMap.Hexagon> hex in HexMap.Hexagons)
         {
-            if (hex.Value.Biome is Biome.PlayerCity)
+            if (hex.Value.IsCity is CityType.Player)
             {
                 playerCities.Add(hex.Key);
                 cameraCityPositions.Add(HexMap.Hexagons[hex.Key].CentreOfFaceWorld);
             }
-            else if (hex.Value.Biome is Biome.EnemyCity)
+            else if (hex.Value.IsCity is CityType.Enemy)
             {
                 enemyCities.Add(hex.Key);
             }
@@ -271,7 +271,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Leave a city
-        if((HexMap.Hexagons[player.CurrentCell].Biome == Biome.PlayerCity || HexMap.Hexagons[player.CurrentCell].Biome == Biome.EnemyCity) && HexMap.Hexagons[destinationCell].Biome != Biome.PlayerCity)
+        if((HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Player || HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Enemy) && HexMap.Hexagons[destinationCell].IsCity != CityType.Player)
         {
             foreach (City city in Cities)
             {
@@ -286,7 +286,7 @@ public class GameManager : MonoBehaviour
             }
         }
         // Enter a city
-        else if (HexMap.Hexagons[destinationCell].Biome == Biome.PlayerCity || HexMap.Hexagons[destinationCell].Biome == Biome.EnemyCity)
+        else if (HexMap.Hexagons[destinationCell].IsCity == CityType.Player || HexMap.Hexagons[destinationCell].IsCity == CityType.Enemy)
         {
             foreach(City city in Cities)
             {
