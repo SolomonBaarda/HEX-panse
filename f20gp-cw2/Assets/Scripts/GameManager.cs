@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     [Range(2, 6)]
     public uint NumberOfPlayers = 6;
     public int PlayerTurn;
+    public bool GameTurn = false;
 
     public LayerMask MouseLayerMask;
     public float MouseRaycastDistance = 100.0f;
@@ -86,6 +87,8 @@ public class GameManager : MonoBehaviour
             {
                 yield return null;
             }
+
+            HUD.Instance.PlayerTurnText.text = "";
         }
 
         TerrainGenerator.Generate();
@@ -104,12 +107,12 @@ public class GameManager : MonoBehaviour
 
         foreach (KeyValuePair<Vector3Int, HexMap.Hexagon> hex in HexMap.Hexagons)
         {
-            if (hex.Value.Biome is Biome.PlayerCity)
+            if (hex.Value.IsCity is CityType.Player)
             {
                 playerCities.Add(hex.Key);
                 cameraCityPositions.Add(HexMap.Hexagons[hex.Key].CentreOfFaceWorld);
             }
-            else if (hex.Value.Biome is Biome.EnemyCity)
+            else if (hex.Value.IsCity is CityType.Enemy)
             {
                 enemyCities.Add(hex.Key);
             }
@@ -141,7 +144,8 @@ public class GameManager : MonoBehaviour
         }
 
 
-
+        HexMap.GenerateMeshFromHexagons();
+        yield return null;
 
         // Instantiate players and their city
         for (uint i = 0; i < NumberOfPlayers; i++)
@@ -188,12 +192,21 @@ public class GameManager : MonoBehaviour
                 Vector3 playerPositionWorld = HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld;
                 CameraManager.CameraFollow.position = playerPositionWorld;
                 CameraManager.CameraLookAtPlayer.position = playerPositionWorld;
+                CameraManager.SetCameraModeAutomatic(true);
 
+                // Wait for the camera to move there
                 yield return new WaitForSeconds(2.0f);
 
                 // Update player turn
                 currentPlayer = p;
                 PlayerTurn = (int)p.ID;
+
+                // Reinforce each city
+                foreach(City c in Cities.Where(city => city.OwnedBy == p))
+                {
+                    c.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
+                    c.UpdateCity();
+                }
 
                 currentPlayer.ValidMovesThisTurn = CalculateAllValidMovesForPlayer(currentPlayer);
                 UpdateValidMovesHighlight();
@@ -221,52 +234,92 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (currentPlayer != null)
+        if (currentPlayer != null && !GameTurn)
         {
             UpdateHoverHighlight();
 
             if (Input.GetButtonDown("Fire1") && IsHoveringOverCell && currentPlayer.ValidMovesThisTurn.Contains(CellHoveringOver))
             {
                 // Make the move
-                MakeMove(currentPlayer, CellHoveringOver);
+                StartCoroutine(MakeMove(currentPlayer, CellHoveringOver, 1.0f));
             }
         }
     }
 
-    private void MakeMove(Player player, Vector3Int destination)
+    private IEnumerator MakeMove(Player player, Vector3Int destinationCell, float turnDuration)
     {
+        Vector3 originalPlayerPosition = player.transform.position;
+
+        void move()
+        {
+            GameTurn = true;
+
+            Vector3 destination = HexMap.Hexagons[destinationCell].CentreOfFaceWorld;
+            Vector3 facing = destination - originalPlayerPosition;
+            facing.y = 0;
+
+            player.transform.forward = facing;
+            player.CurrentCell = destinationCell;
+
+            player.gameObject.SetActive(true);
+            player.MoveToPosition(originalPlayerPosition, destination, turnDuration);
+
+            // Hide previews etc
+            UpdateValidMovesHighlight();
+            UpdateHoverHighlight();
+            HUD.Instance.PlayerTurnText.text = "";
+        }
+
         // Leave a city
-        if((HexMap.Hexagons[player.CurrentCell].Biome == Biome.PlayerCity || HexMap.Hexagons[player.CurrentCell].Biome == Biome.EnemyCity) && HexMap.Hexagons[destination].Biome != Biome.PlayerCity)
+        if((HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Player || HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Enemy) && HexMap.Hexagons[destinationCell].IsCity != CityType.Player)
         {
             foreach (City city in Cities)
             {
                 if (city.Cell == player.CurrentCell && city.OwnedBy == player)
                 {
                     city.PlayerLeaveCity(player, 1);
+                    move();
+                    yield return new WaitForSeconds(turnDuration);
+                    GameTurn = false;
                     break;
                 }
             }
         }
         // Enter a city
-        else if (HexMap.Hexagons[destination].Biome == Biome.PlayerCity || HexMap.Hexagons[destination].Biome == Biome.EnemyCity)
+        else if (HexMap.Hexagons[destinationCell].IsCity == CityType.Player || HexMap.Hexagons[destinationCell].IsCity == CityType.Enemy)
         {
             foreach(City city in Cities)
             {
-                if(city.Cell == destination)
+                if(city.Cell == destinationCell)
                 {
-                    // Owned by another player
-                    if(city.OwnedBy != null && city.OwnedBy != player)
+                    // Owned by an enemy or another player
+                    if(city.Strength > 0 && (city.OwnedBy == null || city.OwnedBy != player))
                     {
-                        city.PlayerCaptureCity(player);
+                        if(player.Strength > 1)
+                        {
+                            FightCity(city, player);
+
+                            if (city.Strength == 0)
+                            {
+                                move();
+                                yield return new WaitForSeconds(turnDuration);
+                                GameTurn = false;
+                                city.PlayerCaptureCity(player);
+                            }
+                            else
+                            {
+                                GameTurn = true;
+                                yield return new WaitForSeconds(turnDuration);
+                                GameTurn = false;
+                            }
+                        }
                     }
-                    // Owned by an enemy
-                    else if(city.Strength > 0)
-                    {
-                        city.PlayerCaptureCity(player);
-                    }
-                    // Unowned or owned by this player
+                    // Empty or owned by this player
                     else
                     {
+                        move();
+                        yield return new WaitForSeconds(turnDuration);
+                        GameTurn = false;
                         city.PlayerCaptureCity(player);
                     }
 
@@ -275,16 +328,42 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-
-        player.transform.position = HexMap.Hexagons[destination].CentreOfFaceWorld;
-        player.CurrentCell = destination;
+        else
+        {
+            move();
+            yield return new WaitForSeconds(turnDuration);
+            GameTurn = false;
+        }
 
         currentPlayer = null;
+    }
 
-        // Hide previews etc
-        UpdateValidMovesHighlight();
-        UpdateHoverHighlight();
-        HUD.Instance.PlayerTurnText.text = "";
+    private void FightCity(City city, Player player)
+    {
+        int difference = Mathf.Abs(city.Strength - player.Strength);
+        float differencePercentage = (float)difference / Mathf.Max(city.Strength, player.Strength);
+
+        // Small difference so fair fight
+        if (differencePercentage < 0.1f)
+        {
+
+        }
+        // Medium difference so ok fight
+        else if(differencePercentage < 0.5f)
+        {
+
+        }
+        // Large difference so unfair fight
+        else
+        {
+
+        }
+
+        while(player.Strength > 0 && city.Strength > 0)
+        {
+            player.Strength--;
+            city.Strength--;
+        }
     }
 
 
@@ -294,10 +373,14 @@ public class GameManager : MonoBehaviour
         {
             return HexMap.CalculateAllExistingNeighbours(cell)
                 .Where((x) => 
+                    // Ensure it is a valid biome
                     HexMap.Hexagons[x].Biome != Biome.None && 
-                    x != cell &&
+                    // Don't add our current position
+                    x != cell && 
+                    // Move up or down only one step
                     Mathf.Abs(Mathf.Abs(HexMap.Hexagons[cell].Height) - Mathf.Abs(HexMap.Hexagons[x].Height)) <= TerrainGenerator.HeightBetweenEachTerrace + (TerrainGenerator.HeightBetweenEachTerrace / 2.0f) &&
-                    !Players.Any(player => player.CurrentCell == x)
+                    // Ensure there are no players in that cell (either other players or us but in a city)
+                    !Players.Any(player => player.CurrentCell == x && (player.gameObject.activeSelf || player == current))
                 );
         }
 
@@ -322,7 +405,7 @@ public class GameManager : MonoBehaviour
     {
         IsHoveringOverCell = false;
 
-        if (currentPlayer != null && CameraManager.IsHoveringMouseOverTerrain(MouseRaycastDistance, MouseLayerMask, out Vector3 position))
+        if (currentPlayer != null && !GameTurn && CameraManager.IsHoveringMouseOverTerrain(MouseRaycastDistance, MouseLayerMask, out Vector3 position))
         {
             Vector3Int cell = HexMap.Grid.WorldToCell(new Vector3(position.x, 0, position.z));
             if (HexMap.Hexagons.ContainsKey(cell) && currentPlayer.ValidMovesThisTurn.Contains(cell))
@@ -346,7 +429,7 @@ public class GameManager : MonoBehaviour
             g.SetActive(false);
         }
 
-        if (currentPlayer != null)
+        if (currentPlayer != null && !GameTurn)
         {
             foreach (Vector3Int move in currentPlayer.ValidMovesThisTurn)
             {

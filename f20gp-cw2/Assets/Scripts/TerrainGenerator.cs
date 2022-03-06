@@ -38,9 +38,12 @@ public class TerrainGenerator : MonoBehaviour
     {
         None,
         LandOrNone,
-        Land,
-        PlayerCity,
-        EnemyCity
+        Land
+    }
+
+    private void Awake()
+    {
+        TileTypes.GetComponent<TilemapRenderer>().enabled = false;
     }
 
     public void Generate()
@@ -75,6 +78,7 @@ public class TerrainGenerator : MonoBehaviour
         float[] heights = new float[width * height];
         Vector3Int[] positions = new Vector3Int[width * height];
         Terrain[] terrain = new Terrain[width * height];
+        CityType[] cities = new CityType[width * height];
         float min = float.MaxValue, max = float.MinValue;
 
         foreach (Vector3Int position in TileTypes.cellBounds.allPositionsWithin)
@@ -90,6 +94,7 @@ public class TerrainGenerator : MonoBehaviour
                 positions[index] = position;
                 heights[index] = 0.0f;
                 terrain[index] = Terrain.None;
+                cities[index] = CityType.None;
 
                 float CalculateHeight()
                 {
@@ -111,14 +116,23 @@ public class TerrainGenerator : MonoBehaviour
                 else if (tile == PlayerCity)
                 {
                     heights[index] = CalculateHeight();
-                    terrain[index] = Terrain.PlayerCity;
+                    terrain[index] = Terrain.Land;
+                    cities[index] = CityType.Player;
                 }
                 else if (tile == EnemyCity)
                 {
                     heights[index] = CalculateHeight();
 
                     // Do a dice roll to decide if there is a city here
-                    terrain[index] = r.NextDouble() < TerrainSettings.EnemyCityChance ? Terrain.EnemyCity : Terrain.LandOrNone;
+                    if(r.NextDouble() < TerrainSettings.EnemyCityChance)
+                    {
+                        terrain[index] = Terrain.Land;
+                        cities[index] = CityType.Enemy;
+                    }
+                    else
+                    {
+                        terrain[index] = Terrain.LandOrNone;
+                    }
                 }
                 else if (tile == OutOfBounds)
                 {
@@ -156,20 +170,14 @@ public class TerrainGenerator : MonoBehaviour
             // Then round values so that they appear as terraces
             heights[i] = (float)Mathf.RoundToInt(heights[i] * NumberOfTerraces) / NumberOfTerraces;
 
-            if (terrain[i] == Terrain.Land || terrain[i] == Terrain.EnemyCity || terrain[i] == Terrain.PlayerCity)
+            if (terrain[i] == Terrain.Land)
             {
                 heights[i] = Mathf.Clamp(heights[i], HeightBetweenEachTerrace, 1.0f);
             }
 
             // Add the hexagon to the map
-            HexMap.AddHexagon(positions[i], heights[i], CalculateBiome(heights[i], terrain[i]));
+            HexMap.AddHexagon(positions[i], heights[i], CalculateBiome(heights[i], terrain[i]), cities[i]);
         }
-
-        yield return null;
-
-        HexMap.GenerateMeshFromHexagons();
-
-        TileTypes.GetComponent<TilemapRenderer>().enabled = false;
 
         Debug.Log("Generated in " + (DateTime.Now - before).TotalSeconds.ToString("0.0") + " seconds.");
         IsGenerating = false;
@@ -185,10 +193,6 @@ public class TerrainGenerator : MonoBehaviour
                 return TerrainSettings.GetBiomeForHeight(normalisedHeight);
             case Terrain.Land:
                 return TerrainSettings.GetBiomeForHeight(normalisedHeight);
-            case Terrain.PlayerCity:
-                return Biome.PlayerCity;
-            case Terrain.EnemyCity:
-                return Biome.EnemyCity;
             default:
                 return Biome.None;
         }
