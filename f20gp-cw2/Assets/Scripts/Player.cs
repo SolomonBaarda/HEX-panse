@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-
-[RequireComponent(typeof(Renderer))]
 public class Player : MonoBehaviour
 {
     public uint ID;
@@ -14,15 +12,10 @@ public class Player : MonoBehaviour
 
     public HashSet<Vector3Int> ValidMovesThisTurn;
 
-    new Renderer renderer;
+    public Renderer Renderer;
 
     [Space]
     public TMP_Text StrengthText;
-
-    private void Awake()
-    {
-        renderer = GetComponent<Renderer>();
-    }
 
     private void Update()
     {
@@ -41,6 +34,25 @@ public class Player : MonoBehaviour
         CurrentCell = startingCity;
         Strength = strength;
 
-        renderer.material.color = colour;
+        Renderer.material.color = colour;
+    }
+
+    public void MoveToPosition(Vector3 start, Vector3 destination, float timeSeconds)
+    {
+        StartCoroutine(MoveThroughPositions(start, destination, timeSeconds));
+    }
+
+    private IEnumerator MoveThroughPositions(Vector3 start, Vector3 destination, float timeSeconds)
+    {
+        float timer = 0;
+        Vector3 direction = destination - start;
+
+        while (timer < timeSeconds)
+        {
+            transform.position = start + direction * timer / timeSeconds;
+
+            yield return null;
+            timer += Time.deltaTime;
+        }
     }
 }
