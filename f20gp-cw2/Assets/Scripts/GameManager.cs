@@ -237,6 +237,8 @@ public class GameManager : MonoBehaviour
 
     private void MakeMove(Player player, Vector3Int destination)
     {
+        bool moved = true;
+
         // Leave a city
         if((HexMap.Hexagons[player.CurrentCell].Biome == Biome.PlayerCity || HexMap.Hexagons[player.CurrentCell].Biome == Biome.EnemyCity) && HexMap.Hexagons[destination].Biome != Biome.PlayerCity)
         {
@@ -256,19 +258,28 @@ public class GameManager : MonoBehaviour
             {
                 if(city.Cell == destination)
                 {
-                    // Owned by another player
-                    if(city.OwnedBy != null && city.OwnedBy != player)
+                    // Owned by an enemy or another player
+                    if(city.Strength > 0 && (city.OwnedBy == null || city.OwnedBy != player))
                     {
-                        // TODO FIGHTING LOGIC
-                        //city.PlayerCaptureCity(player);
+                        if(player.Strength > 1)
+                        {
+                            FightCity(city, player);
+
+                            if (city.Strength == 0)
+                            {
+                                city.PlayerCaptureCity(player);
+                            }
+                            else
+                            {
+                                moved = false;
+                            }
+                        }
+                        else
+                        {
+                            moved = false;
+                        }
                     }
-                    // Owned by an enemy
-                    else if(city.Strength > 0)
-                    {
-                        // TODO FIGHTING LOGIC
-                        //city.PlayerCaptureCity(player);
-                    }
-                    // Unowned or owned by this player
+                    // Empty or owned by this player
                     else
                     {
                         city.PlayerCaptureCity(player);
@@ -280,8 +291,11 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        player.transform.position = HexMap.Hexagons[destination].CentreOfFaceWorld;
-        player.CurrentCell = destination;
+        if(moved)
+        {
+            player.transform.position = HexMap.Hexagons[destination].CentreOfFaceWorld;
+            player.CurrentCell = destination;
+        }
 
         currentPlayer = null;
 
@@ -291,18 +305,32 @@ public class GameManager : MonoBehaviour
         HUD.Instance.PlayerTurnText.text = "";
     }
 
-    private void FightForCity(uint cityStrength, uint attackerStrength, out uint newCityStrength, out uint newAttackerStrength)
+    private void FightCity(City city, Player player)
     {
-        int difference = Mathf.Abs((int)(cityStrength - attackerStrength));
+        int difference = Mathf.Abs(city.Strength - player.Strength);
+        float differencePercentage = (float)difference / Mathf.Max(city.Strength, player.Strength);
 
-        // Fair fight
-        if(cityStrength == attackerStrength)
+        // Small difference so fair fight
+        if (differencePercentage < 0.1f)
+        {
+
+        }
+        // Medium difference so ok fight
+        else if(differencePercentage < 0.5f)
+        {
+
+        }
+        // Large difference so unfair fight
+        else
         {
 
         }
 
-        newCityStrength = 0;
-        newAttackerStrength = 0;
+        while(player.Strength > 0 && city.Strength > 0)
+        {
+            player.Strength--;
+            city.Strength--;
+        }
     }
 
 
@@ -312,10 +340,14 @@ public class GameManager : MonoBehaviour
         {
             return HexMap.CalculateAllExistingNeighbours(cell)
                 .Where((x) => 
+                    // Ensure it is a valid biome
                     HexMap.Hexagons[x].Biome != Biome.None && 
-                    x != cell &&
+                    // Don't add our current position
+                    x != cell && 
+                    // Move up or down only one step
                     Mathf.Abs(Mathf.Abs(HexMap.Hexagons[cell].Height) - Mathf.Abs(HexMap.Hexagons[x].Height)) <= TerrainGenerator.HeightBetweenEachTerrace + (TerrainGenerator.HeightBetweenEachTerrace / 2.0f) &&
-                    !Players.Any(player => player.CurrentCell == x && player.gameObject.activeSelf)
+                    // Ensure there are no players in that cell (either other players or us but in a city)
+                    !Players.Any(player => player.CurrentCell == x && (player.gameObject.activeSelf || player == current))
                 );
         }
 
