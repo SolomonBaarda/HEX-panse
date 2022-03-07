@@ -103,14 +103,12 @@ public class GameManager : MonoBehaviour
 
         List<Vector3Int> playerCities = new List<Vector3Int>();
         List<Vector3Int> enemyCities = new List<Vector3Int>();
-        List<Vector3> cameraCityPositions = new List<Vector3>();
 
         foreach (KeyValuePair<Vector3Int, HexMap.Hexagon> hex in HexMap.Hexagons)
         {
             if (hex.Value.IsCity is CityType.Player)
             {
                 playerCities.Add(hex.Key);
-                cameraCityPositions.Add(HexMap.Hexagons[hex.Key].CentreOfFaceWorld);
             }
             else if (hex.Value.IsCity is CityType.Enemy)
             {
@@ -118,31 +116,24 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        CameraManager.SetupCameras(cameraCityPositions);
-
-        // Choose player starting positions
-        switch (playerCities.Count)
+        Vector3 centre = new Vector3();
+        foreach (Vector3 pos in playerCities)
         {
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-            default:
-                // Shuffle the list of player cities
-                int n = playerCities.Count;
-                while (n > 1)
-                {
-                    n--;
-                    int k = r.Next(n + 1);
-                    Vector3Int value = playerCities[k];
-                    playerCities[k] = playerCities[n];
-                    playerCities[n] = value;
-                }
-                break;
+            centre += pos;
+        }
+        centre /= playerCities.Count;
+
+        // Sort points so that thay are in anti clockwise order
+        playerCities.Sort((x, y) => -Clockwise.Compare(HexMap.Hexagons[x].CentreOfFaceWorld, HexMap.Hexagons[y].CentreOfFaceWorld, centre));
+
+        List<Vector3> cameraCityPositions = new List<Vector3>();
+        foreach(Vector3Int pos in playerCities)
+        {
+            cameraCityPositions.Add(HexMap.Hexagons[pos].CentreOfFaceWorld);
+
         }
 
+        CameraManager.SetupCameras(cameraCityPositions, centre);
 
         HexMap.GenerateMeshFromHexagons();
         yield return null;

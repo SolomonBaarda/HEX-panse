@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-[RequireComponent(typeof(Renderer))]
 public class City : MonoBehaviour
 {
     public int Strength;
@@ -18,12 +17,7 @@ public class City : MonoBehaviour
     public Color DefaultColour = Color.white;
 
 
-    new Renderer renderer;
-
-    private void Awake()
-    {
-        renderer = GetComponent<Renderer>();
-    }
+    public Renderer Renderer;
 
     private void Update()
     {
@@ -33,7 +27,7 @@ public class City : MonoBehaviour
     public void UpdateCity()
     {
         StrengthText.text = $"strength: {Strength}";
-        renderer.material.color = OwnedBy != null ? OwnedBy.Colour : DefaultColour;
+        Renderer.material.color = OwnedBy != null ? OwnedBy.Colour : DefaultColour;
     }
 
     public void Init(Vector3Int cell, int strength)
@@ -43,7 +37,7 @@ public class City : MonoBehaviour
 
         if (OwnedBy != null)
         {
-            renderer.material.color = OwnedBy.Colour;
+            Renderer.material.color = OwnedBy.Colour;
         }
 
         UpdateCity();
