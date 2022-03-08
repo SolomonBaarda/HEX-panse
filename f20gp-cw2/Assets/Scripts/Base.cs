@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-public class City : MonoBehaviour
+public class Base : MonoBehaviour
 {
     public int Strength;
     public Vector3Int Cell;

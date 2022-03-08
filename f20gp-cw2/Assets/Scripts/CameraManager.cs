@@ -6,44 +6,72 @@ using Cinemachine;
 public class CameraManager : MonoBehaviour
 {
     public Camera MainCamera;
-    public CinemachineVirtualCamera Camera;
+
+    [Header("Dolly")]
+    public CinemachineVirtualCamera DollyCamera;
     CinemachineTrackedDolly Dolly;
+    public CinemachineSmoothPath DollyPath;
 
-    public CinemachineSmoothPath CameraPath;
-
-    public float CameraHeightOffGround = 3.0f;
-    public float CameraDistanceFromCity = 1.0f;
-
-    public Transform CameraLookAtPlayer;
-    public Transform CameraLookAtCentreMap;
-
-    public Transform CameraFollow;
+    public float CameraDollyHeightOffGround = 3.0f;
+    public float CameraDollyDistanceFromCity = 1.75f;
 
     [Space]
     public float ManualCameraSpeed = 0.1f;
 
+    [Header("Top Down")]
+    public CinemachineVirtualCamera TopDownCamera;
+    public float CameraTopDownHeightOffGround = 5.0f;
+    bool useDolly = false;
+
+    [Header("Shared")]
+    public Transform CameraLookAtPlayer;
+    public Transform CameraLookAtCentreMap;
+    public Transform CameraFollow;
+
+
     private void Awake()
     {
-        Dolly = Camera.GetCinemachineComponent<CinemachineTrackedDolly>();
+        Dolly = DollyCamera.GetCinemachineComponent<CinemachineTrackedDolly>();
+
+        DollyCamera.Priority = 1;
+        TopDownCamera.Priority = 0;
     }
 
     private void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Space))
+        if(Input.GetKeyDown(KeyCode.Alpha1))
         {
             SetCameraModeAutomatic(!Dolly.m_AutoDolly.m_Enabled);
         }
 
-        if (!Dolly.m_AutoDolly.m_Enabled)
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            useDolly = !useDolly;
+
+            SetCurrentCamera(useDolly);
+        }
+
+        if (!Dolly.m_AutoDolly.m_Enabled && useDolly)
         {
             Dolly.m_PathPosition += Input.GetAxis("Horizontal") * ManualCameraSpeed * Time.deltaTime;
         }
     }
 
-    public enum CameraMode
+
+    public void SetCurrentCamera(bool dolly)
     {
-        Automatic,
-        Manual
+        if(dolly)
+        {
+            DollyCamera.Priority = 1;
+            TopDownCamera.Priority = 0;
+        }
+        else
+        {
+            DollyCamera.Priority = 0;
+            TopDownCamera.Priority = 1;
+        }
+
+        useDolly = dolly;
     }
 
     public void SetCameraModeAutomatic(bool automatic)
@@ -59,16 +87,18 @@ public class CameraManager : MonoBehaviour
         for (int i = 0; i < cities.Count; i++)
         {
             Vector3 position = cities[i];
-            position.y += CameraHeightOffGround;
+            position.y += CameraDollyHeightOffGround;
 
             Vector3 facing = (new Vector3(centre.x, 0, centre.z) - new Vector3(position.x, 0, position.z)).normalized;
 
-            waypoints[i] = new CinemachineSmoothPath.Waypoint() { position = position - facing * CameraDistanceFromCity };
+            waypoints[i] = new CinemachineSmoothPath.Waypoint() { position = position - facing * CameraDollyDistanceFromCity };
         }
 
-        CameraPath.m_Waypoints = waypoints;
+        DollyPath.m_Waypoints = waypoints;
 
         CameraLookAtCentreMap.position = centre;
+
+        TopDownCamera.transform.position = centre + Vector3.up * CameraTopDownHeightOffGround;
     }
 
     public bool IsHoveringMouseOverTerrain(float raycastDistance, LayerMask layermask, out Vector3 position)

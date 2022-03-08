@@ -28,7 +28,10 @@ public class GameManager : MonoBehaviour
     [Header("Game Objects")]
     public Transform GameObjectParent;
     public GameObject PlayerPrefab;
-    public GameObject CityPrefab;
+    public GameObject PlayerBasePrefab;
+    public GameObject EnemyBasePrefab;
+
+
     public Transform HoverPreviewParent;
     public GameObject ValidMovePrefab;
     List<GameObject> AllValidMovePreviews = new List<GameObject>();
@@ -38,7 +41,9 @@ public class GameManager : MonoBehaviour
 
     List<Player> Players = new List<Player>();
     Player currentPlayer;
-    List<City> Cities = new List<City>();
+    List<Base> Cities = new List<Base>();
+
+    Vector3 centreOfMap;
 
     private void Start()
     {
@@ -54,7 +59,7 @@ public class GameManager : MonoBehaviour
             Destroy(p.gameObject);
         }
 
-        foreach (City c in Cities)
+        foreach (Base c in Cities)
         {
             Destroy(c.gameObject);
         }
@@ -116,8 +121,8 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        Vector3 centre = new Vector3();
-        foreach (Vector3 pos in playerCities)
+        Vector3Int centre = new Vector3Int();
+        foreach (Vector3Int pos in playerCities)
         {
             centre += pos;
         }
@@ -126,14 +131,15 @@ public class GameManager : MonoBehaviour
         // Sort points so that thay are in anti clockwise order
         playerCities.Sort((x, y) => -Clockwise.Compare(HexMap.Hexagons[x].CentreOfFaceWorld, HexMap.Hexagons[y].CentreOfFaceWorld, centre));
 
+        centreOfMap = HexMap.Hexagons[centre].CentreOfFaceWorld;
+
         List<Vector3> cameraCityPositions = new List<Vector3>();
         foreach(Vector3Int pos in playerCities)
         {
             cameraCityPositions.Add(HexMap.Hexagons[pos].CentreOfFaceWorld);
-
         }
 
-        CameraManager.SetupCameras(cameraCityPositions, centre);
+        CameraManager.SetupCameras(cameraCityPositions, centreOfMap);
 
         HexMap.GenerateMeshFromHexagons();
         yield return null;
@@ -152,8 +158,8 @@ public class GameManager : MonoBehaviour
             Players.Add(player);
 
             // Init player city
-            GameObject c = Instantiate(CityPrefab, HexMap.Hexagons[cityCell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
-            City city = c.GetComponent<City>();
+            GameObject b = Instantiate(PlayerBasePrefab, HexMap.Hexagons[cityCell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
+            Base city = b.GetComponent<Base>();
             city.Init(cityCell, 0);
             Cities.Add(city);
 
@@ -166,8 +172,8 @@ public class GameManager : MonoBehaviour
         // Instantiate enemies
         foreach (Vector3Int cell in enemyCities)
         {
-            GameObject c = Instantiate(CityPrefab, HexMap.Hexagons[cell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
-            City city = c.GetComponent<City>();
+            GameObject c = Instantiate(EnemyBasePrefab, HexMap.Hexagons[cell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
+            Base city = c.GetComponent<Base>();
             city.Init(cell, r.Next(TerrainGenerator.TerrainSettings.InitialEnemyStrengthMin, TerrainGenerator.TerrainSettings.InitialEnemyStrengthMax));
             Cities.Add(city);
         }
@@ -193,7 +199,7 @@ public class GameManager : MonoBehaviour
                 PlayerTurn = (int)p.ID;
 
                 // Reinforce each city
-                foreach(City c in Cities.Where(city => city.OwnedBy == p))
+                foreach(Base c in Cities.Where(city => city.OwnedBy == p))
                 {
                     c.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
                     c.UpdateCity();
@@ -264,7 +270,7 @@ public class GameManager : MonoBehaviour
         // Leave a city
         if((HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Player || HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Enemy) && HexMap.Hexagons[destinationCell].IsCity != CityType.Player)
         {
-            foreach (City city in Cities)
+            foreach (Base city in Cities)
             {
                 if (city.Cell == player.CurrentCell && city.OwnedBy == player)
                 {
@@ -279,7 +285,7 @@ public class GameManager : MonoBehaviour
         // Enter a city
         else if (HexMap.Hexagons[destinationCell].IsCity == CityType.Player || HexMap.Hexagons[destinationCell].IsCity == CityType.Enemy)
         {
-            foreach(City city in Cities)
+            foreach(Base city in Cities)
             {
                 if(city.Cell == destinationCell)
                 {
@@ -329,7 +335,7 @@ public class GameManager : MonoBehaviour
         currentPlayer = null;
     }
 
-    private void FightCity(City city, Player player)
+    private void FightCity(Base city, Player player)
     {
         int difference = Mathf.Abs(city.Strength - player.Strength);
         float differencePercentage = (float)difference / Mathf.Max(city.Strength, player.Strength);
@@ -457,6 +463,9 @@ public class GameManager : MonoBehaviour
                 Gizmos.color = p.Colour;
                 Gizmos.DrawRay(HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld, Vector3.up * 10);
             }
+
+            Gizmos.color = Color.green;
+            Gizmos.DrawRay(centreOfMap, Vector3.up * 25);
         }
     }
 }

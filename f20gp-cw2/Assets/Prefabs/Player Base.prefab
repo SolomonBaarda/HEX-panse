@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1061491997912404618}
   - component: {fileID: 2150620019267859105}
   m_Layer: 0
-  m_Name: City prefab
+  m_Name: Player Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -247,7 +247,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1131971222981200635}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.006, y: 0.18, z: 0.008}
+  m_LocalPosition: {x: -0.006, y: 0.263, z: 0.008}
   m_LocalScale: {x: 6.5, y: 6.5, z: 6.5}
   m_Children: []
   m_Father: {fileID: 1061491997912404618}
@@ -272,10 +272,11 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2926557707537190794, guid: 66f4433a33f198948a231f26d3c7ffe1, type: 3}
-  - {fileID: 8845476145313196380, guid: 66f4433a33f198948a231f26d3c7ffe1, type: 3}
-  - {fileID: -6713893761712694582, guid: 66f4433a33f198948a231f26d3c7ffe1, type: 3}
-  - {fileID: 5561349426305759274, guid: 66f4433a33f198948a231f26d3c7ffe1, type: 3}
+  - {fileID: 3576842793460171548, guid: eb8ac2955374e464ba8a9ac847bc9aca, type: 3}
+  - {fileID: 4271621107692538591, guid: eb8ac2955374e464ba8a9ac847bc9aca, type: 3}
+  - {fileID: 5561349426305759274, guid: eb8ac2955374e464ba8a9ac847bc9aca, type: 3}
+  - {fileID: 696854114824873738, guid: eb8ac2955374e464ba8a9ac847bc9aca, type: 3}
+  - {fileID: -6532317789103167206, guid: eb8ac2955374e464ba8a9ac847bc9aca, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -304,4 +305,4 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1131971222981200635}
-  m_Mesh: {fileID: -1388485733357891733, guid: 66f4433a33f198948a231f26d3c7ffe1, type: 3}
+  m_Mesh: {fileID: 4237179799288247963, guid: eb8ac2955374e464ba8a9ac847bc9aca, type: 3}
