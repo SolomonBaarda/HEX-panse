@@ -19,8 +19,12 @@ public class TerrainSettings : ScriptableObject
 
     [Range(0, 1)]
     public float EnemyCityChance = 0.25f;
-    public int InitialEnemyStrengthMin = 3;
-    public int InitialEnemyStrengthMax = 7;
+    public int InitialEnemyStrengthMin = 0;
+    public int InitialEnemyStrengthMax = 3;
+    [Min(1)]
+    public int MaxEnemyStrengthMin = 4;
+    [Min(1)]
+    public int MaxEnemyStrengthMax = 10;
 
     [Space]
     [Min(1)]

@@ -5,6 +5,7 @@ using TMPro;
 
 public class Base : MonoBehaviour
 {
+    public int MaxStrength;
     public int Strength;
     public Vector3Int Cell;
 
@@ -30,10 +31,11 @@ public class Base : MonoBehaviour
         Renderer.material.color = OwnedBy != null ? OwnedBy.Colour : DefaultColour;
     }
 
-    public void Init(Vector3Int cell, int strength)
+    public void Init(Vector3Int cell, int strength, int maxStrength)
     {
         Cell = cell;
         Strength = strength;
+        MaxStrength = maxStrength;
 
         if (OwnedBy != null)
         {

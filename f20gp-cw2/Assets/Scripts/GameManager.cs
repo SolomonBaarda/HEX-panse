@@ -194,7 +194,7 @@ public class GameManager : MonoBehaviour
             // Init player city
             GameObject b = Instantiate(PlayerBasePrefab, HexMap.Hexagons[cityCell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
             Base city = b.GetComponent<Base>();
-            city.Init(cityCell, 0);
+            city.Init(cityCell, 0, int.MaxValue);
             Bases.Add(city);
 
             // Move the player into that city
@@ -208,7 +208,8 @@ public class GameManager : MonoBehaviour
         {
             GameObject c = Instantiate(EnemyBasePrefab, HexMap.Hexagons[cell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
             Base city = c.GetComponent<Base>();
-            city.Init(cell, r.Next(TerrainGenerator.TerrainSettings.InitialEnemyStrengthMin, TerrainGenerator.TerrainSettings.InitialEnemyStrengthMax));
+            int maxStrength = r.Next(TerrainGenerator.TerrainSettings.MaxEnemyStrengthMin, TerrainGenerator.TerrainSettings.MaxEnemyStrengthMax);
+            city.Init(cell, r.Next(TerrainGenerator.TerrainSettings.InitialEnemyStrengthMin, TerrainGenerator.TerrainSettings.InitialEnemyStrengthMax), maxStrength);
             Bases.Add(city);
         }
 
@@ -282,6 +283,7 @@ public class GameManager : MonoBehaviour
                 if (b.OwnedBy == null && b.Strength > 0)
                 {
                     b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
+                    b.Strength = Mathf.Min(b.Strength, b.MaxStrength);
                     b.UpdateCity();
                 }
             }
