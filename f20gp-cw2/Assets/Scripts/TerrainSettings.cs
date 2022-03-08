@@ -22,6 +22,14 @@ public class TerrainSettings : ScriptableObject
     public int InitialEnemyStrengthMin = 3;
     public int InitialEnemyStrengthMax = 7;
 
+    [Space]
+    [Min(1)]
+    public int NumberSidedDice = 6;
+    [Min(1)]
+    public int MaxNumberDefendersPerFight = 2;
+    [Min(1)]
+    public int MaxNumberAttackersPerFight = 2;
+
     [System.Serializable]
     public class TerrainLayerSetting
     {

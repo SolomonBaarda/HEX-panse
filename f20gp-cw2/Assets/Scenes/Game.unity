@@ -4075,7 +4075,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49df91dba4e53c543a4f78162f81ca06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NumberOfPlayers: 3
+  NumberOfPlayers: 2
   PlayerTurn: 0
   GameTurn: 0
   MouseLayerMask:

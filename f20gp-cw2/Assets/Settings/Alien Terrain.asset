@@ -25,7 +25,10 @@ MonoBehaviour:
     MaximumHeightThreshold: 1
   InitialPlayerStrength: 10
   ReinforcementStrengthPerCityPerTurn: 1
-  MaxPlayerMovementPerTurn: 2
+  MaxPlayerMovementPerTurn: 3
   EnemyCityChance: 0.3
-  InitialEnemyStrengthMin: 3
-  InitialEnemyStrengthMax: 7
+  InitialEnemyStrengthMin: 1
+  InitialEnemyStrengthMax: 3
+  NumberSidedDice: 6
+  MaxNumberDefendersPerFight: 2
+  MaxNumberAttackersPerFight: 3

@@ -41,7 +41,7 @@ public class GameManager : MonoBehaviour
 
     List<Player> Players = new List<Player>();
     Player currentPlayer;
-    List<Base> Cities = new List<Base>();
+    List<Base> Bases = new List<Base>();
 
     Vector3 centreOfMap;
 
@@ -59,14 +59,14 @@ public class GameManager : MonoBehaviour
             Destroy(p.gameObject);
         }
 
-        foreach (Base c in Cities)
+        foreach (Base c in Bases)
         {
             Destroy(c.gameObject);
         }
 
         HexMap.Clear();
         Players.Clear();
-        Cities.Clear();
+        Bases.Clear();
 
         foreach (GameObject g in AllValidMovePreviews)
         {
@@ -83,7 +83,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator PlayGame()
     {
-        if(HUD.Instance == null)
+        if (HUD.Instance == null)
         {
             AsyncOperation load = SceneManager.LoadSceneAsync("HUD", LoadSceneMode.Additive);
 
@@ -134,7 +134,7 @@ public class GameManager : MonoBehaviour
         centreOfMap = HexMap.Hexagons[centre].CentreOfFaceWorld;
 
         List<Vector3> cameraCityPositions = new List<Vector3>();
-        foreach(Vector3Int pos in playerCities)
+        foreach (Vector3Int pos in playerCities)
         {
             cameraCityPositions.Add(HexMap.Hexagons[pos].CentreOfFaceWorld);
         }
@@ -144,7 +144,7 @@ public class GameManager : MonoBehaviour
         HexMap.GenerateMeshFromHexagons();
         yield return null;
 
-        if(playerCities.Count != 6)
+        if (playerCities.Count != 6)
         {
             Debug.LogError("There are not 6 available player cities on the map");
         }
@@ -193,7 +193,7 @@ public class GameManager : MonoBehaviour
             GameObject b = Instantiate(PlayerBasePrefab, HexMap.Hexagons[cityCell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
             Base city = b.GetComponent<Base>();
             city.Init(cityCell, 0);
-            Cities.Add(city);
+            Bases.Add(city);
 
             // Move the player into that city
             city.PlayerCaptureCity(player);
@@ -207,7 +207,7 @@ public class GameManager : MonoBehaviour
             GameObject c = Instantiate(EnemyBasePrefab, HexMap.Hexagons[cell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
             Base city = c.GetComponent<Base>();
             city.Init(cell, r.Next(TerrainGenerator.TerrainSettings.InitialEnemyStrengthMin, TerrainGenerator.TerrainSettings.InitialEnemyStrengthMax));
-            Cities.Add(city);
+            Bases.Add(city);
         }
 
         Debug.Log($"Playing with {Players.Count} players and {enemyCities.Count} enemies");
@@ -231,7 +231,7 @@ public class GameManager : MonoBehaviour
                 PlayerTurn = (int)p.ID;
 
                 // Reinforce each city
-                foreach(Base c in Cities.Where(city => city.OwnedBy == p))
+                foreach (Base c in Bases.Where(city => city.OwnedBy == p))
                 {
                     c.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
                     c.UpdateCity();
@@ -243,7 +243,7 @@ public class GameManager : MonoBehaviour
                 HUD.Instance.PlayerTurnText.text = $"Current turn: player {PlayerTurn}";
                 HUD.Instance.PlayerTurnText.color = p.Colour;
 
-                if(currentPlayer.ValidMovesThisTurn.Count == 0)
+                if (currentPlayer.ValidMovesThisTurn.Count == 0)
                 {
                     Debug.LogError($"Player {currentPlayer.ID} can't make any moves. Skipping turn");
                     currentPlayer = null;
@@ -257,6 +257,14 @@ public class GameManager : MonoBehaviour
             }
 
             // Do enemy turn
+            foreach(Base b in Bases)
+            {
+                if(b.OwnedBy == null && b.Strength > 0)
+                {
+                    b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
+                    b.UpdateCity();
+                }
+            }
         }
     }
 
@@ -300,9 +308,9 @@ public class GameManager : MonoBehaviour
         }
 
         // Leave a city
-        if((HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Player || HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Enemy) && HexMap.Hexagons[destinationCell].IsCity != CityType.Player)
+        if ((HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Player || HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Enemy) && HexMap.Hexagons[destinationCell].IsCity != CityType.Player)
         {
-            foreach (Base city in Cities)
+            foreach (Base city in Bases)
             {
                 if (city.Cell == player.CurrentCell && city.OwnedBy == player)
                 {
@@ -317,16 +325,16 @@ public class GameManager : MonoBehaviour
         // Enter a city
         else if (HexMap.Hexagons[destinationCell].IsCity == CityType.Player || HexMap.Hexagons[destinationCell].IsCity == CityType.Enemy)
         {
-            foreach(Base city in Cities)
+            foreach (Base city in Bases)
             {
-                if(city.Cell == destinationCell)
+                if (city.Cell == destinationCell)
                 {
                     // Owned by an enemy or another player
-                    if(city.Strength > 0 && (city.OwnedBy == null || city.OwnedBy != player))
+                    if (city.Strength > 0 && (city.OwnedBy == null || city.OwnedBy != player))
                     {
-                        if(player.Strength > 1)
+                        if (player.Strength > 1)
                         {
-                            FightCity(city, player);
+                            FightBase(city, player);
 
                             if (city.Strength == 0)
                             {
@@ -367,53 +375,66 @@ public class GameManager : MonoBehaviour
         currentPlayer = null;
     }
 
-    private void FightCity(Base city, Player player)
+    private void FightBase(Base city, Player player)
     {
-        int difference = Mathf.Abs(city.Strength - player.Strength);
-        float differencePercentage = (float)difference / Mathf.Max(city.Strength, player.Strength);
+        int defenders = Mathf.Min(city.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight);
+        int attackers = Mathf.Min(player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight);
 
-        // Small difference so fair fight
-        if (differencePercentage < 0.1f)
+        List<int> attackStrengths = new List<int>();
+        List<int> defendStrengths = new List<int>();
+
+        for (int i = 0; i < attackers; i++)
         {
-
-        }
-        // Medium difference so ok fight
-        else if(differencePercentage < 0.5f)
-        {
-
-        }
-        // Large difference so unfair fight
-        else
-        {
-
+            attackStrengths.Add(Random.Range(0, TerrainGenerator.TerrainSettings.NumberSidedDice + 1));
         }
 
-        while(player.Strength > 0 && city.Strength > 0)
+        for (int i = 0; i < defenders; i++)
         {
-            player.Strength--;
-            city.Strength--;
+            defendStrengths.Add(Random.Range(0, TerrainGenerator.TerrainSettings.NumberSidedDice + 1));
         }
+
+        attackStrengths.Sort((x, y) => -x.CompareTo(y));
+        defendStrengths.Sort((x, y) => -x.CompareTo(y));
+
+        for (int i = 0; i < attackStrengths.Count && i < defendStrengths.Count; i++)
+        {
+            // Attacker wins
+            if (attackStrengths[i] > defendStrengths[i])
+            {
+                city.Strength--;
+                Debug.Log("attack won");
+            }
+            // Defenders win
+            else
+            {
+                player.Strength--;
+                Debug.Log("defenders won");
+            }
+        }
+
+        city.UpdateCity();
+        player.UpdatePlayer();
     }
 
 
-    private HashSet<Vector3Int> CalculateAllValidMovesForPlayer(Player current)
+    private HashSet<Vector3Int> CalculateAllValidMovesForPlayer(Player player)
     {
-        IEnumerable<Vector3Int> GetMoves(Vector3Int cell)
+        IEnumerable<Vector3Int> GetMoves(Vector3Int cell, Vector3Int startingCell)
         {
             return HexMap.CalculateAllExistingNeighbours(cell)
-                .Where((x) => 
+                .Where((x) =>
                     // Ensure it is a valid biome
-                    HexMap.Hexagons[x].Biome != Biome.None && 
+                    HexMap.Hexagons[x].Biome != Biome.None &&
                     // Don't add our current position
-                    x != cell && 
+                    x != cell &&
                     // Move up or down only one step
                     Mathf.Abs(Mathf.Abs(HexMap.Hexagons[cell].Height) - Mathf.Abs(HexMap.Hexagons[x].Height)) <= TerrainGenerator.HeightBetweenEachTerrace + (TerrainGenerator.HeightBetweenEachTerrace / 2.0f) &&
                     // Ensure there are no players in that cell (either other players or us but in a city)
-                    !Players.Any(player => player.CurrentCell == x && (player.gameObject.activeSelf || player == current))
+                    !Players.Any(p => p.CurrentCell == x && (p.gameObject.activeSelf || p == player))
                 );
         }
 
-        HashSet<Vector3Int> all = new HashSet<Vector3Int>(GetMoves(current.CurrentCell));
+        HashSet<Vector3Int> all = new HashSet<Vector3Int>(GetMoves(player.CurrentCell, player.CurrentCell));
 
         for (int i = 1; i < TerrainGenerator.TerrainSettings.MaxPlayerMovementPerTurn; i++)
         {
@@ -421,7 +442,8 @@ public class GameManager : MonoBehaviour
 
             foreach (Vector3Int move in all)
             {
-                allCopy.UnionWith(GetMoves(move));
+                // Ensure that players can only move through their own cities and attack neighbour tiles
+                allCopy.UnionWith(GetMoves(move, player.CurrentCell).Where(x => !Bases.Any(b => b.Cell == x && b.OwnedBy != player)));
             }
 
             all = allCopy;
