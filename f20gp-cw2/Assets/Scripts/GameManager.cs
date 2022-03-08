@@ -144,6 +144,38 @@ public class GameManager : MonoBehaviour
         HexMap.GenerateMeshFromHexagons();
         yield return null;
 
+        if(playerCities.Count != 6)
+        {
+            Debug.LogError("There are not 6 available player cities on the map");
+        }
+
+        switch (NumberOfPlayers)
+        {
+            // Ensure that players are on opposite sides of the board
+            case 2:
+                Vector3Int opposite0 = playerCities[3];
+                playerCities.RemoveAt(3);
+                playerCities.Insert(1, opposite0);
+                break;
+            // Ensure that all three players have their own corner
+            case 3:
+                Vector3Int player1 = playerCities[1];
+                Vector3Int player3 = playerCities[3];
+                playerCities.RemoveAt(3);
+                playerCities.RemoveAt(1);
+
+                playerCities.Add(player1);
+                playerCities.Add(player3);
+
+                break;
+            // Ensure it's two players to a side
+            case 4:
+                Vector3Int player2 = playerCities[2];
+                playerCities.RemoveAt(2);
+                playerCities.Add(player2);
+                break;
+        }
+
         // Instantiate players and their city
         for (uint i = 0; i < NumberOfPlayers; i++)
         {
