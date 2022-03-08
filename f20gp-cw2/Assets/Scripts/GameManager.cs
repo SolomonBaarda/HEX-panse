@@ -220,7 +220,7 @@ public class GameManager : MonoBehaviour
         {
             foreach (Player p in Players)
             {
-                if(gameOver)
+                if (gameOver)
                 {
                     yield break;
                 }
@@ -267,9 +267,9 @@ public class GameManager : MonoBehaviour
                 }
             }
 
-            foreach(Player p in Players)
+            foreach (Player p in Players)
             {
-                if(p.IsDead)
+                if (p.IsDead)
                 {
                     Destroy(p.gameObject);
                 }
@@ -301,6 +301,34 @@ public class GameManager : MonoBehaviour
             {
                 // Make the move
                 StartCoroutine(MakeMove(currentPlayer, CellHoveringOver, 1.0f));
+            }
+        }
+    }
+
+    private void TryRespawnPlayer(Player player)
+    {
+        Base x = Bases.Find(x => x.OwnedBy == player);
+
+        // Still alive
+        if (x != null)
+        {
+            Debug.Log($"Player {player.ID} respawned at base");
+
+            // Respawn at an owned base
+            player.CurrentCell = x.Cell;
+            player.transform.position = HexMap.Hexagons[player.CurrentCell].CentreOfFaceWorld;
+            x.PlayerCaptureCity(player);
+        }
+        // Player dies
+        else
+        {
+            Debug.Log($"Player {player.ID} has died");
+            player.Kill();
+
+            if (Players.Where(p => !p.IsDead).Count() == 1)
+            {
+                Debug.Log($"Player {Players[0].ID} has won");
+                gameOver = true;
             }
         }
     }
@@ -356,7 +384,10 @@ public class GameManager : MonoBehaviour
                     {
                         if (player.Strength >= 1)
                         {
-                            FightBase(b, player);
+                            Fight(ref b.Strength, ref player.Strength);
+
+                            b.UpdateCity();
+                            player.UpdatePlayer();
 
                             // Player won
                             if (b.Strength == 0)
@@ -368,30 +399,7 @@ public class GameManager : MonoBehaviour
                             // City won
                             else if (player.Strength == 0)
                             {
-                                Base x = Bases.Find(x => x.OwnedBy == player);
-
-                                // Still alive
-                                if (x != null)
-                                {
-                                    Debug.Log($"Player {player.ID} respawned at base");
-
-                                    // Respawn at an owned base
-                                    player.CurrentCell = x.Cell;
-                                    player.transform.position = HexMap.Hexagons[player.CurrentCell].CentreOfFaceWorld;
-                                    x.PlayerCaptureCity(player);
-                                }
-                                // Player dies
-                                else
-                                {
-                                    Debug.Log($"Player {player.ID} has died");
-                                    player.Kill();
-
-                                    if (Players.Where(p => !p.IsDead).Count() == 1)
-                                    {
-                                        Debug.Log($"Player {Players[0].ID} has won");
-                                        gameOver = true;
-                                    }
-                                }
+                                TryRespawnPlayer(player);
 
                                 yield return new WaitForSeconds(turnDuration);
                             }
@@ -415,21 +423,55 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        // Just move
         else
         {
-            move();
-            yield return new WaitForSeconds(turnDuration);
+            Player defending = Players.Find(p => !p.IsDead && p.CurrentCell == destinationCell);
+
+            // Attacking another player
+            if (defending != null)
+            {
+                Fight(ref defending.Strength, ref player.Strength);
+
+                defending.UpdatePlayer();
+                player.UpdatePlayer();
+
+                // Attacking won
+                if (defending.Strength == 0)
+                {
+                    yield return new WaitForSeconds(turnDuration);
+                    move();
+                    TryRespawnPlayer(defending);
+                }
+                // Defending won
+                else if (player.Strength == 0)
+                {
+                    yield return new WaitForSeconds(turnDuration);
+
+                    TryRespawnPlayer(player);
+                }
+                // Fight not over yet
+                else
+                {
+                    yield return new WaitForSeconds(turnDuration);
+                }
+
+            }
+            // Just move
+            else
+            {
+                move();
+                yield return new WaitForSeconds(turnDuration);
+            }
         }
 
         GameTurn = false;
         currentPlayer = null;
     }
 
-    private void FightBase(Base city, Player player)
+    private void Fight(ref int defendingStrength, ref int attackingStrength)
     {
-        int defenders = Mathf.Min(city.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight);
-        int attackers = Mathf.Min(player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight);
+        int defenders = Mathf.Min(defendingStrength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight);
+        int attackers = Mathf.Min(attackingStrength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight);
 
         List<int> attackStrengths = new List<int>();
         List<int> defendStrengths = new List<int>();
@@ -452,19 +494,16 @@ public class GameManager : MonoBehaviour
             // Attacker wins
             if (attackStrengths[i] > defendStrengths[i])
             {
-                city.Strength--;
+                defendingStrength--;
                 Debug.Log("attack won");
             }
             // Defenders win
             else
             {
-                player.Strength--;
+                attackingStrength--;
                 Debug.Log("defenders won");
             }
         }
-
-        city.UpdateCity();
-        player.UpdatePlayer();
     }
 
 
@@ -479,13 +518,12 @@ public class GameManager : MonoBehaviour
                     // Don't add our current position
                     x != cell &&
                     // Move up or down only one step
-                    Mathf.Abs(Mathf.Abs(HexMap.Hexagons[cell].Height) - Mathf.Abs(HexMap.Hexagons[x].Height)) <= TerrainGenerator.HeightBetweenEachTerrace + (TerrainGenerator.HeightBetweenEachTerrace / 2.0f) &&
-                    // Ensure there are no players in that cell (either other players or us but in a city)
-                    !Players.Any(p => p.CurrentCell == x && (p.gameObject.activeSelf || p == player))
+                    Mathf.Abs(Mathf.Abs(HexMap.Hexagons[cell].Height) - Mathf.Abs(HexMap.Hexagons[x].Height)) <= TerrainGenerator.HeightBetweenEachTerrace + (TerrainGenerator.HeightBetweenEachTerrace / 2.0f)
+
                 );
         }
 
-        HashSet<Vector3Int> all = new HashSet<Vector3Int>(GetMoves(player.CurrentCell, player.CurrentCell));
+        HashSet<Vector3Int> all = new HashSet<Vector3Int>(GetMoves(player.CurrentCell, player.CurrentCell).Where(x => x != player.CurrentCell));
 
         for (int i = 1; i < TerrainGenerator.TerrainSettings.MaxPlayerMovementPerTurn; i++)
         {
@@ -493,8 +531,14 @@ public class GameManager : MonoBehaviour
 
             foreach (Vector3Int move in all)
             {
-                // Ensure that players can only move through their own cities and attack neighbour tiles
-                allCopy.UnionWith(GetMoves(move, player.CurrentCell).Where(x => !Bases.Any(b => b.Cell == x && b.Strength > 0 && b.OwnedBy != player)));
+                IEnumerable<Vector3Int> validMoves = GetMoves(move, player.CurrentCell)
+                    .Where(x =>
+                        // Ensure that players can only move through their own cities and attack neighbour tiles
+                        !Bases.Any(b => b.Cell == x && b.Strength > 0 && b.OwnedBy != player) &&
+                        // Ensure there are no players in that cell (either other players or us but in a city)
+                        !Players.Any(p => p.CurrentCell == x && (p.gameObject.activeSelf || p == player)));
+
+                allCopy.UnionWith(validMoves);
             }
 
             all = allCopy;
