@@ -394,6 +394,12 @@ public class GameManager : MonoBehaviour
                             b.UpdateCity();
                             player.UpdatePlayer();
 
+                            Vector3 destination = HexMap.Hexagons[destinationCell].CentreOfFaceWorld;
+                            Vector3 facing = destination - originalPlayerPosition;
+                            facing.y = 0;
+
+                            player.transform.forward = facing;
+
                             // Player won
                             if (b.Strength == 0)
                             {
@@ -435,6 +441,13 @@ public class GameManager : MonoBehaviour
             // Attacking another player
             if (defending != null)
             {
+                Vector3 destination = HexMap.Hexagons[destinationCell].CentreOfFaceWorld;
+                Vector3 facing = destination - originalPlayerPosition;
+                facing.y = 0;
+
+                player.transform.forward = facing;
+                defending.transform.forward = -facing;
+
                 Fight(ref defending.Strength, ref player.Strength);
 
                 defending.UpdatePlayer();
