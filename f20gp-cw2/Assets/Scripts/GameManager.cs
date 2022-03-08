@@ -47,6 +47,11 @@ public class GameManager : MonoBehaviour
 
     bool gameOver = false;
 
+    private void Awake()
+    {
+        Application.targetFrameRate = 60;
+    }
+
     private void Start()
     {
         StartGame();
@@ -113,11 +118,11 @@ public class GameManager : MonoBehaviour
 
         foreach (KeyValuePair<Vector3Int, HexMap.Hexagon> hex in HexMap.Hexagons)
         {
-            if (hex.Value.IsCity is CityType.Player)
+            if (hex.Value.IsCity is BaseType.Player)
             {
                 playerCities.Add(hex.Key);
             }
-            else if (hex.Value.IsCity is CityType.Enemy)
+            else if (hex.Value.IsCity is BaseType.Enemy)
             {
                 enemyCities.Add(hex.Key);
             }
@@ -359,7 +364,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Leave a city
-        if ((HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Player || HexMap.Hexagons[player.CurrentCell].IsCity == CityType.Enemy) && HexMap.Hexagons[destinationCell].IsCity != CityType.Player)
+        if ((HexMap.Hexagons[player.CurrentCell].IsCity == BaseType.Player || HexMap.Hexagons[player.CurrentCell].IsCity == BaseType.Enemy) && HexMap.Hexagons[destinationCell].IsCity != BaseType.Player)
         {
             foreach (Base city in Bases)
             {
@@ -373,7 +378,7 @@ public class GameManager : MonoBehaviour
             }
         }
         // Enter a city
-        else if (HexMap.Hexagons[destinationCell].IsCity == CityType.Player || HexMap.Hexagons[destinationCell].IsCity == CityType.Enemy)
+        else if (HexMap.Hexagons[destinationCell].IsCity == BaseType.Player || HexMap.Hexagons[destinationCell].IsCity == BaseType.Enemy)
         {
             foreach (Base b in Bases)
             {

@@ -20,6 +20,7 @@ public class Base : MonoBehaviour
 
     public Renderer Renderer;
 
+
     private void Update()
     {
         StrengthText.transform.rotation = Camera.main.transform.rotation;

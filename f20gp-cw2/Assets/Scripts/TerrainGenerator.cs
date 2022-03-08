@@ -78,7 +78,7 @@ public class TerrainGenerator : MonoBehaviour
         float[] heights = new float[width * height];
         Vector3Int[] positions = new Vector3Int[width * height];
         Terrain[] terrain = new Terrain[width * height];
-        CityType[] cities = new CityType[width * height];
+        BaseType[] cities = new BaseType[width * height];
         float min = float.MaxValue, max = float.MinValue;
 
         foreach (Vector3Int position in TileTypes.cellBounds.allPositionsWithin)
@@ -94,7 +94,7 @@ public class TerrainGenerator : MonoBehaviour
                 positions[index] = position;
                 heights[index] = 0.0f;
                 terrain[index] = Terrain.None;
-                cities[index] = CityType.None;
+                cities[index] = BaseType.None;
 
                 float CalculateHeight()
                 {
@@ -117,7 +117,7 @@ public class TerrainGenerator : MonoBehaviour
                 {
                     heights[index] = CalculateHeight();
                     terrain[index] = Terrain.Land;
-                    cities[index] = CityType.Player;
+                    cities[index] = BaseType.Player;
                 }
                 else if (tile == EnemyCity)
                 {
@@ -127,7 +127,7 @@ public class TerrainGenerator : MonoBehaviour
                     if(r.NextDouble() < TerrainSettings.EnemyCityChance)
                     {
                         terrain[index] = Terrain.Land;
-                        cities[index] = CityType.Enemy;
+                        cities[index] = BaseType.Enemy;
                     }
                     else
                     {

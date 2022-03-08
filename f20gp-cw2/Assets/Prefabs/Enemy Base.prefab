@@ -45,12 +45,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5091788a57298e941bfe8a627c62eca5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MaxStrength: 0
   Strength: 0
   Cell: {x: 0, y: 0, z: 0}
   OwnedBy: {fileID: 0}
   StrengthText: {fileID: 4330655482201049216}
   DefaultColour: {r: 1, g: 1, b: 1, a: 1}
   Renderer: {fileID: 1492219403883637550}
+  Mesh: {fileID: 3697907114656473060}
 --- !u!1 &1063220122284583710
 GameObject:
   m_ObjectHideFlags: 0

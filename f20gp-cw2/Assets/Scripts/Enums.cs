@@ -10,7 +10,7 @@ public enum Biome
     Forest,
 }
 
-public enum CityType
+public enum BaseType
 {
     None,
     Player,
