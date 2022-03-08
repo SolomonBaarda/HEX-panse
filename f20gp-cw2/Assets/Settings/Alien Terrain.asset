@@ -23,12 +23,12 @@ MonoBehaviour:
     MaximumHeightThreshold: 0.7
   - Biome: 3
     MaximumHeightThreshold: 1
-  InitialPlayerStrength: 10
+  InitialPlayerStrength: 0
   ReinforcementStrengthPerCityPerTurn: 1
   MaxPlayerMovementPerTurn: 3
   EnemyCityChance: 0.3
-  InitialEnemyStrengthMin: 1
+  InitialEnemyStrengthMin: 0
   InitialEnemyStrengthMax: 3
   NumberSidedDice: 6
-  MaxNumberDefendersPerFight: 2
-  MaxNumberAttackersPerFight: 3
+  MaxNumberDefendersPerFight: 4
+  MaxNumberAttackersPerFight: 7

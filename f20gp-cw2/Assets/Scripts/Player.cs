@@ -20,6 +20,9 @@ public class Player : MonoBehaviour
     [Space]
     public ParticleSystem Particle;
 
+    [Space]
+    public bool IsDead = false;
+
     private void Update()
     {
         StrengthText.transform.rotation = Camera.main.transform.rotation;
@@ -43,6 +46,12 @@ public class Player : MonoBehaviour
     public void MoveToPosition(Vector3 start, Vector3 destination, float timeSeconds)
     {
         StartCoroutine(MoveThroughPositions(start, destination, timeSeconds));
+    }
+
+    public void Kill()
+    {
+        IsDead = true;
+        gameObject.SetActive(false);
     }
 
     private IEnumerator MoveThroughPositions(Vector3 start, Vector3 destination, float timeSeconds)

@@ -4046,7 +4046,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1f0a786410725d4abebe116559d1c0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HeightOffset: 2
+  HeightOffset: 1.5
   BiomeSettings: {fileID: 11400000, guid: 825007e823039fd4899686ab543ceb16, type: 2}
   TerrainParent: {fileID: 1006054790}
   GroundMaterial: {fileID: 2100000, guid: fcb31d72e9f8675459a7d92fd2ef6493, type: 2}
@@ -4075,7 +4075,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49df91dba4e53c543a4f78162f81ca06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NumberOfPlayers: 2
+  NumberOfPlayers: 3
   PlayerTurn: 0
   GameTurn: 0
   MouseLayerMask:

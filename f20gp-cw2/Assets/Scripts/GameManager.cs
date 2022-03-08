@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
 {
     [Range(2, 6)]
     public uint NumberOfPlayers = 6;
-    public int PlayerTurn;
+    public int CurrentTurn;
     public bool GameTurn = false;
 
     public LayerMask MouseLayerMask;
@@ -44,6 +44,8 @@ public class GameManager : MonoBehaviour
     List<Base> Bases = new List<Base>();
 
     Vector3 centreOfMap;
+
+    bool gameOver = false;
 
     private void Start()
     {
@@ -213,53 +215,71 @@ public class GameManager : MonoBehaviour
         Debug.Log($"Playing with {Players.Count} players and {enemyCities.Count} enemies");
 
 
-        while (true)
+        while (!gameOver)
         {
             foreach (Player p in Players)
             {
-                // Set the position that the camera should try and move to
-                Vector3 playerPositionWorld = HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld;
-                CameraManager.CameraFollow.position = playerPositionWorld;
-                CameraManager.CameraLookAtPlayer.position = playerPositionWorld;
-                CameraManager.SetCameraModeAutomatic(true);
-
-                // Wait for the camera to move there
-                yield return new WaitForSeconds(2.0f);
-
-                // Update player turn
-                currentPlayer = p;
-                PlayerTurn = (int)p.ID;
-
-                // Reinforce each city
-                foreach (Base c in Bases.Where(city => city.OwnedBy == p))
+                if(gameOver)
                 {
-                    c.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
-                    c.UpdateCity();
+                    yield break;
                 }
 
-                currentPlayer.ValidMovesThisTurn = CalculateAllValidMovesForPlayer(currentPlayer);
-                UpdateValidMovesHighlight();
-
-                HUD.Instance.PlayerTurnText.text = $"Current turn: player {PlayerTurn}";
-                HUD.Instance.PlayerTurnText.color = p.Colour;
-
-                if (currentPlayer.ValidMovesThisTurn.Count == 0)
+                if (!p.IsDead)
                 {
-                    Debug.LogError($"Player {currentPlayer.ID} can't make any moves. Skipping turn");
-                    currentPlayer = null;
-                }
+                    // Set the position that the camera should try and move to
+                    Vector3 playerPositionWorld = HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld;
+                    CameraManager.CameraFollow.position = playerPositionWorld;
+                    CameraManager.CameraLookAtPlayer.position = playerPositionWorld;
+                    CameraManager.SetCameraModeAutomatic(true);
 
-                // Wait here while it is this players turn
-                while (currentPlayer == p)
-                {
-                    yield return null;
+                    // Wait for the camera to move there
+                    yield return new WaitForSeconds(2.0f);
+
+                    // Update player turn
+                    currentPlayer = p;
+                    CurrentTurn = (int)p.ID;
+
+                    // Reinforce each city
+                    foreach (Base c in Bases.Where(city => city.OwnedBy == p))
+                    {
+                        c.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
+                        c.UpdateCity();
+                    }
+
+                    currentPlayer.ValidMovesThisTurn = CalculateAllValidMovesForPlayer(currentPlayer);
+                    UpdateValidMovesHighlight();
+
+                    HUD.Instance.PlayerTurnText.text = $"Current turn: player {CurrentTurn}";
+                    HUD.Instance.PlayerTurnText.color = p.Colour;
+
+                    if (currentPlayer.ValidMovesThisTurn.Count == 0)
+                    {
+                        Debug.LogError($"Player {currentPlayer.ID} can't make any moves. Skipping turn");
+                        currentPlayer = null;
+                    }
+
+                    // Wait here while it is this players turn
+                    while (currentPlayer != null && currentPlayer == p)
+                    {
+                        yield return null;
+                    }
                 }
             }
 
-            // Do enemy turn
-            foreach(Base b in Bases)
+            foreach(Player p in Players)
             {
-                if(b.OwnedBy == null && b.Strength > 0)
+                if(p.IsDead)
+                {
+                    Destroy(p.gameObject);
+                }
+            }
+
+            Players.RemoveAll(p => p.IsDead);
+
+            // Do enemy turn
+            foreach (Base b in Bases)
+            {
+                if (b.OwnedBy == null && b.Strength > 0)
                 {
                     b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
                     b.UpdateCity();
@@ -271,7 +291,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (currentPlayer != null && !GameTurn)
+        if (currentPlayer != null && !GameTurn && !gameOver)
         {
             UpdateHoverHighlight();
 
@@ -286,6 +306,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator MakeMove(Player player, Vector3Int destinationCell, float turnDuration)
     {
         Vector3 originalPlayerPosition = player.transform.position;
+        GameTurn = true;
 
         void move()
         {
@@ -317,7 +338,6 @@ public class GameManager : MonoBehaviour
                     city.PlayerLeaveCity(player, 1);
                     move();
                     yield return new WaitForSeconds(turnDuration);
-                    GameTurn = false;
                     break;
                 }
             }
@@ -325,29 +345,58 @@ public class GameManager : MonoBehaviour
         // Enter a city
         else if (HexMap.Hexagons[destinationCell].IsCity == CityType.Player || HexMap.Hexagons[destinationCell].IsCity == CityType.Enemy)
         {
-            foreach (Base city in Bases)
+            foreach (Base b in Bases)
             {
-                if (city.Cell == destinationCell)
+                if (b.Cell == destinationCell)
                 {
                     // Owned by an enemy or another player
-                    if (city.Strength > 0 && (city.OwnedBy == null || city.OwnedBy != player))
+                    if (b.Strength > 0 && (b.OwnedBy == null || b.OwnedBy != player))
                     {
-                        if (player.Strength > 1)
+                        if (player.Strength >= 1)
                         {
-                            FightBase(city, player);
+                            FightBase(b, player);
 
-                            if (city.Strength == 0)
+                            // Player won
+                            if (b.Strength == 0)
                             {
                                 move();
                                 yield return new WaitForSeconds(turnDuration);
-                                GameTurn = false;
-                                city.PlayerCaptureCity(player);
+                                b.PlayerCaptureCity(player);
                             }
+                            // City won
+                            else if (player.Strength == 0)
+                            {
+                                Base x = Bases.Find(x => x.OwnedBy == player);
+
+                                // Still alive
+                                if (x != null)
+                                {
+                                    Debug.Log($"Player {player.ID} respawned at base");
+
+                                    // Respawn at an owned base
+                                    player.CurrentCell = x.Cell;
+                                    player.transform.position = HexMap.Hexagons[player.CurrentCell].CentreOfFaceWorld;
+                                    x.PlayerCaptureCity(player);
+                                }
+                                // Player dies
+                                else
+                                {
+                                    Debug.Log($"Player {player.ID} has died");
+                                    player.Kill();
+
+                                    if (Players.Where(p => !p.IsDead).Count() == 1)
+                                    {
+                                        Debug.Log($"Player {Players[0].ID} has won");
+                                        gameOver = true;
+                                    }
+                                }
+
+                                yield return new WaitForSeconds(turnDuration);
+                            }
+                            // Fight not over yet
                             else
                             {
-                                GameTurn = true;
                                 yield return new WaitForSeconds(turnDuration);
-                                GameTurn = false;
                             }
                         }
                     }
@@ -356,8 +405,7 @@ public class GameManager : MonoBehaviour
                     {
                         move();
                         yield return new WaitForSeconds(turnDuration);
-                        GameTurn = false;
-                        city.PlayerCaptureCity(player);
+                        b.PlayerCaptureCity(player);
                     }
 
                     // Exit the for loop
@@ -365,13 +413,14 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+        // Just move
         else
         {
             move();
             yield return new WaitForSeconds(turnDuration);
-            GameTurn = false;
         }
 
+        GameTurn = false;
         currentPlayer = null;
     }
 
@@ -396,7 +445,7 @@ public class GameManager : MonoBehaviour
         attackStrengths.Sort((x, y) => -x.CompareTo(y));
         defendStrengths.Sort((x, y) => -x.CompareTo(y));
 
-        for (int i = 0; i < attackStrengths.Count && i < defendStrengths.Count; i++)
+        for (int i = 0; i < Mathf.Min(attackers, defenders); i++)
         {
             // Attacker wins
             if (attackStrengths[i] > defendStrengths[i])
@@ -443,7 +492,7 @@ public class GameManager : MonoBehaviour
             foreach (Vector3Int move in all)
             {
                 // Ensure that players can only move through their own cities and attack neighbour tiles
-                allCopy.UnionWith(GetMoves(move, player.CurrentCell).Where(x => !Bases.Any(b => b.Cell == x && b.OwnedBy != player)));
+                allCopy.UnionWith(GetMoves(move, player.CurrentCell).Where(x => !Bases.Any(b => b.Cell == x && b.Strength > 0 && b.OwnedBy != player)));
             }
 
             all = allCopy;
