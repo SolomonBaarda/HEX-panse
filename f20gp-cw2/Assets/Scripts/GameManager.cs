@@ -51,11 +51,6 @@ public class GameManager : MonoBehaviour
         Application.targetFrameRate = 60;
     }
 
-    private void Start()
-    {
-        StartGame(1);
-    }
-
     public void Clear()
     {
         StopAllCoroutines();

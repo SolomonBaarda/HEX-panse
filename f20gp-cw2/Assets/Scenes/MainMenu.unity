@@ -1007,6 +1007,8 @@ MonoBehaviour:
   createGameButton: {fileID: 1089252174}
   helpButton: {fileID: 429157895}
   helpMenu: {fileID: 1405680489}
+  seedInput: {fileID: 485057857}
+  seed: 0
 --- !u!1 &850264992
 GameObject:
   m_ObjectHideFlags: 0
