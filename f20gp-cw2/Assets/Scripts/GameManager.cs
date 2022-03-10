@@ -203,7 +203,7 @@ public class GameManager : MonoBehaviour
             Bases.Add(city);
 
             // Move the player into that city
-            city.PlayerCaptureCity(player);
+            city.PlayerCaptureBase(player);
         }
 
         enemyCities.AddRange(playerCities);
@@ -251,7 +251,7 @@ public class GameManager : MonoBehaviour
                     foreach (Base c in Bases.Where(city => city.OwnedBy == p))
                     {
                         c.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
-                        c.UpdateCity();
+                        c.UpdateBase();
                     }
 
                     currentPlayer.ValidMovesThisTurn = CalculateAllValidMovesForPlayer(currentPlayer);
@@ -291,7 +291,7 @@ public class GameManager : MonoBehaviour
                 {
                     b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
                     b.Strength = Mathf.Min(b.Strength, b.MaxStrength);
-                    b.UpdateCity();
+                    b.UpdateBase();
                 }
             }
         }
@@ -324,7 +324,7 @@ public class GameManager : MonoBehaviour
             // Respawn at an owned base
             player.CurrentCell = x.Cell;
             player.transform.position = HexMap.Hexagons[player.CurrentCell].CentreOfFaceWorld;
-            x.PlayerCaptureCity(player);
+            x.PlayerCaptureBase(player);
         }
         // Player dies
         else
@@ -345,16 +345,21 @@ public class GameManager : MonoBehaviour
         Vector3 originalPlayerPosition = player.transform.position;
         GameTurn = true;
 
+        // Hide previews etc
+        UpdateValidMovesHighlight();
+        UpdateHoverHighlight();
+        HUD.Instance.PlayerTurnText.text = "";
+
         // ---------- LEAVE TILE ----------
 
-        Base baseLeaving = Bases.Find(x => x.Cell == player.CurrentCell && x.OwnedBy == player);
+        Base currentBase = Bases.Find(x => x.Cell == player.CurrentCell && x.OwnedBy == player);
+        Player defending = Players.Find(p => !p.IsDead && p.CurrentCell == destinationCell);
 
-        // Leaving a base
-        if (baseLeaving != null)
+        // Trying to leave a base
+        if (currentBase != null && defending == null)
         {
-            baseLeaving.PlayerLeaveCity(player, 1);
+            currentBase.PlayerLeaveBase(player, 1);
         }
-
 
         void move()
         {
@@ -369,11 +374,6 @@ public class GameManager : MonoBehaviour
 
             player.gameObject.SetActive(true);
             player.MoveToPosition(originalPlayerPosition, destination, turnDuration);
-
-            // Hide previews etc
-            UpdateValidMovesHighlight();
-            UpdateHoverHighlight();
-            HUD.Instance.PlayerTurnText.text = "";
         }
 
         // ---------- MOVE TO NEXT TILE ----------
@@ -394,7 +394,7 @@ public class GameManager : MonoBehaviour
 
                 GameLogic.Fight(ref baseDestination.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
 
-                baseDestination.UpdateCity();
+                baseDestination.UpdateBase();
                 player.UpdatePlayer();
 
                 // Make the player face the city
@@ -406,13 +406,12 @@ public class GameManager : MonoBehaviour
                 {
                     move();
                     yield return new WaitForSeconds(turnDuration);
-                    baseDestination.PlayerCaptureCity(player);
+                    baseDestination.PlayerCaptureBase(player);
                 }
                 // City won
                 else if (player.Strength == 0)
                 {
                     TryRespawnPlayer(player);
-
                     yield return new WaitForSeconds(turnDuration);
                 }
                 // Fight not over yet
@@ -426,25 +425,50 @@ public class GameManager : MonoBehaviour
             {
                 move();
                 yield return new WaitForSeconds(turnDuration);
-                baseDestination.PlayerCaptureCity(player);
+                baseDestination.PlayerCaptureBase(player);
             }
         }
-        // Not a base
-        else
+        // Trying to attack a player
+        else if (defending != null)
         {
-            Player defending = Players.Find(p => !p.IsDead && p.CurrentCell == destinationCell);
+            Vector3 facing = HexMap.Hexagons[destinationCell].CentreOfFaceWorld - originalPlayerPosition;
+            facing.y = 0;
 
-            // There is a player on that cell
-            if (defending != null)
+            // If attacking a player while inside a base
+            if (currentBase != null)
+            {
+                defending.transform.forward = -facing;
+
+                GameLogic.Fight(ref defending.Strength, ref currentBase.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+                defending.UpdatePlayer();
+                currentBase.UpdateBase();
+
+                // Attacking won
+                if (defending.Strength == 0)
+                {
+                    yield return new WaitForSeconds(turnDuration);
+                    TryRespawnPlayer(defending);
+                }
+                // Defending won
+                else if (currentBase.Strength == 0)
+                {
+                    yield return new WaitForSeconds(turnDuration);
+                    TryRespawnPlayer(player);
+                }
+                // Fight not over yet
+                else
+                {
+                    yield return new WaitForSeconds(turnDuration);
+                }
+            }
+            // Otherwise normal fight
+            else
             {
                 // Make players face each other
-                Vector3 facing = HexMap.Hexagons[destinationCell].CentreOfFaceWorld - originalPlayerPosition;
-                facing.y = 0;
                 player.transform.forward = facing;
                 defending.transform.forward = -facing;
 
                 GameLogic.Fight(ref defending.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
-
                 defending.UpdatePlayer();
                 player.UpdatePlayer();
 
@@ -467,13 +491,14 @@ public class GameManager : MonoBehaviour
                     yield return new WaitForSeconds(turnDuration);
                 }
             }
-            // Just move
-            else
-            {
-                move();
-                yield return new WaitForSeconds(turnDuration);
-            }
         }
+        // Just move
+        else
+        {
+            move();
+            yield return new WaitForSeconds(turnDuration);
+        }
+
 
         // ---------- END OF MOVE ----------
 
@@ -483,7 +508,7 @@ public class GameManager : MonoBehaviour
 
     private HashSet<Vector3Int> CalculateAllValidMovesForPlayer(Player player)
     {
-        IEnumerable<Vector3Int> GetMoves(Vector3Int cell, Vector3Int startingCell)
+        IEnumerable<Vector3Int> GetAllMovesForCell(Vector3Int cell)
         {
             return HexMap.CalculateAllExistingNeighbours(cell)
                 .Where((x) =>
@@ -497,16 +522,30 @@ public class GameManager : MonoBehaviour
                 );
         }
 
-        HashSet<Vector3Int> all = new HashSet<Vector3Int>(GetMoves(player.CurrentCell, player.CurrentCell).Where(x => x != player.CurrentCell));
+        // Calculate the number of tiles the player can move
+        int maxPlayerMovement = TerrainGenerator.TerrainSettings.MaxPlayerMovementPerTurn;
 
-        for (int i = 1; i < TerrainGenerator.TerrainSettings.MaxPlayerMovementPerTurn; i++)
+        if (Bases.Find(x => x.Cell == player.CurrentCell && x.OwnedBy == player) != null)
+        {
+            maxPlayerMovement = TerrainGenerator.TerrainSettings.MaxPlayerMovementPerTurnInBase;
+        }
+
+        // Get the initial moves (can move to any cell, this allows us to attack things)
+        HashSet<Vector3Int> all = new HashSet<Vector3Int>(GetAllMovesForCell(player.CurrentCell)
+            .Where(x =>
+                // Don't allow the player to move to the cell they are currently on
+                x != player.CurrentCell));
+
+        for (int i = 1; i < maxPlayerMovement; i++)
         {
             HashSet<Vector3Int> allCopy = new HashSet<Vector3Int>(all);
 
             foreach (Vector3Int move in all)
             {
-                IEnumerable<Vector3Int> validMoves = GetMoves(move, player.CurrentCell)
+                IEnumerable<Vector3Int> validMoves = GetAllMovesForCell(move)
                     .Where(x =>
+                        // Don't allow the player to move to the cell they are currently on
+                        x != player.CurrentCell &&
                         // Ensure that players can only move through their own cities and attack neighbour tiles
                         !Bases.Any(b => b.Cell == x && b.Strength > 0 && b.OwnedBy != player) &&
                         // Ensure there are no players in that cell (either other players or us but in a city)

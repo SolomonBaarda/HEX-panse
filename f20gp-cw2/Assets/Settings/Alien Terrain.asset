@@ -26,6 +26,7 @@ MonoBehaviour:
   InitialPlayerStrength: 10
   ReinforcementStrengthPerCityPerTurn: 1
   MaxPlayerMovementPerTurn: 3
+  MaxPlayerMovementPerTurnInBase: 5
   EnemyCityChance: 0.3
   InitialEnemyStrengthMin: 0
   InitialEnemyStrengthMax: 3

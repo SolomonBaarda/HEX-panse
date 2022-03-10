@@ -26,9 +26,15 @@ public class Base : MonoBehaviour
         StrengthText.transform.rotation = Camera.main.transform.rotation;
     }
 
-    public void UpdateCity()
+    public void UpdateBase()
     {
         StrengthText.text = $"strength: {Strength}";
+
+        if(Strength <= 0)
+        {
+            OwnedBy = null;
+        }
+
         Renderer.material.color = OwnedBy != null ? OwnedBy.Colour : DefaultColour;
     }
 
@@ -43,10 +49,10 @@ public class Base : MonoBehaviour
             Renderer.material.color = OwnedBy.Colour;
         }
 
-        UpdateCity();
+        UpdateBase();
     }
 
-    public void PlayerCaptureCity(Player player)
+    public void PlayerCaptureBase(Player player)
     {
         OwnedBy = player;
         Strength += player.Strength;
@@ -54,10 +60,10 @@ public class Base : MonoBehaviour
         player.Strength = 0;
         player.gameObject.SetActive(false); 
 
-        UpdateCity();
+        UpdateBase();
     }
 
-    public void PlayerLeaveCity(Player player, int strengthToLeave)
+    public void PlayerLeaveBase(Player player, int strengthToLeave)
     {
         // Player keeps control of the city 
         if(strengthToLeave < Strength)
@@ -76,7 +82,7 @@ public class Base : MonoBehaviour
 
         player.gameObject.SetActive(true);
 
-        UpdateCity();
+        UpdateBase();
         player.UpdatePlayer();
     }
 }

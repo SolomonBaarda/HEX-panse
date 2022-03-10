@@ -14,6 +14,8 @@ public class TerrainSettings : ScriptableObject
     public int ReinforcementStrengthPerCityPerTurn = 1;
     [Min(1)]
     public int MaxPlayerMovementPerTurn = 2;
+    public int MaxPlayerMovementPerTurnInBase = 3;
+
 
     [Space]
 
