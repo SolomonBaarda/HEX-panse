@@ -353,10 +353,12 @@ public class GameManager : MonoBehaviour
         // ---------- LEAVE TILE ----------
 
         Base currentBase = Bases.Find(x => x.Cell == player.CurrentCell && x.OwnedBy == player);
-        Player defending = Players.Find(p => !p.IsDead && p.CurrentCell == destinationCell);
+        Player defendingPlayer = Players.Find(p => !p.IsDead && p.CurrentCell == destinationCell);
+        Base defendingBase = Bases.Find(x => x.Cell == destinationCell);
+
 
         // Trying to leave a base
-        if (currentBase != null && defending == null)
+        if (currentBase != null && defendingPlayer == null && defendingBase == null)
         {
             currentBase.PlayerLeaveBase(player, 1);
         }
@@ -378,58 +380,90 @@ public class GameManager : MonoBehaviour
 
         // ---------- MOVE TO NEXT TILE ----------
 
-        Base baseDestination = Bases.Find(x => x.Cell == destinationCell);
 
         // Trying to enter a base
-        if (baseDestination != null)
+        if (defendingBase != null)
         {
             // Owned by an enemy or another player
             // Attack the city
-            if (baseDestination.Strength > 0 && (baseDestination.OwnedBy == null || baseDestination.OwnedBy != player))
+            if (defendingBase.Strength > 0 && (defendingBase.OwnedBy == null || defendingBase.OwnedBy != player))
             {
-                if (player.Strength <= 0 || baseDestination.Strength <= 0)
+                // Base to base combat
+                if(currentBase != null)
                 {
-                    Debug.LogError("Player or base has strength 0");
+                    GameLogic.Fight(ref defendingBase.Strength, ref currentBase.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+
+                    defendingBase.UpdateBase();
+                    currentBase.UpdateBase();
+
+                    // Player won
+                    if (defendingBase.Strength == 0)
+                    {
+                        currentBase.PlayerLeaveBase(player, 1);
+                        move();
+                        yield return new WaitForSeconds(turnDuration);
+                        defendingBase.PlayerCaptureBase(player);
+                    }
+                    // Other base won won
+                    else if (currentBase.Strength == 0)
+                    {
+                        TryRespawnPlayer(player);
+                        yield return new WaitForSeconds(turnDuration);
+                    }
+                    // Fight not over yet
+                    else
+                    {
+                        yield return new WaitForSeconds(turnDuration);
+                    }
                 }
-
-                GameLogic.Fight(ref baseDestination.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
-
-                baseDestination.UpdateBase();
-                player.UpdatePlayer();
-
-                // Make the player face the city
-                Vector3 facing = HexMap.Hexagons[destinationCell].CentreOfFaceWorld - originalPlayerPosition;
-                player.transform.forward = new Vector3(facing.x, 0, facing.z);
-
-                // Player won
-                if (baseDestination.Strength == 0)
-                {
-                    move();
-                    yield return new WaitForSeconds(turnDuration);
-                    baseDestination.PlayerCaptureBase(player);
-                }
-                // City won
-                else if (player.Strength == 0)
-                {
-                    TryRespawnPlayer(player);
-                    yield return new WaitForSeconds(turnDuration);
-                }
-                // Fight not over yet
+                // Normal base attacking
                 else
                 {
-                    yield return new WaitForSeconds(turnDuration);
+                    if (player.Strength <= 0 || defendingBase.Strength <= 0)
+                    {
+                        Debug.LogError("Player or base has strength 0");
+                    }
+
+                    GameLogic.Fight(ref defendingBase.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+
+                    defendingBase.UpdateBase();
+                    player.UpdatePlayer();
+
+                    // Make the player face the city
+                    Vector3 facing = HexMap.Hexagons[destinationCell].CentreOfFaceWorld - originalPlayerPosition;
+                    player.transform.forward = new Vector3(facing.x, 0, facing.z);
+
+                    // Player won
+                    if (defendingBase.Strength == 0)
+                    {
+                        move();
+                        yield return new WaitForSeconds(turnDuration);
+                        defendingBase.PlayerCaptureBase(player);
+                    }
+                    // City won
+                    else if (player.Strength == 0)
+                    {
+                        TryRespawnPlayer(player);
+                        yield return new WaitForSeconds(turnDuration);
+                    }
+                    // Fight not over yet
+                    else
+                    {
+                        yield return new WaitForSeconds(turnDuration);
+                    }
                 }
+
             }
             // Otherwise just capture it
             else
             {
                 move();
                 yield return new WaitForSeconds(turnDuration);
-                baseDestination.PlayerCaptureBase(player);
+                defendingBase.PlayerCaptureBase(player);
             }
         }
         // Trying to attack a player
-        else if (defending != null)
+        else if (defendingPlayer != null)
         {
             Vector3 facing = HexMap.Hexagons[destinationCell].CentreOfFaceWorld - originalPlayerPosition;
             facing.y = 0;
@@ -437,17 +471,17 @@ public class GameManager : MonoBehaviour
             // If attacking a player while inside a base
             if (currentBase != null)
             {
-                defending.transform.forward = -facing;
+                defendingPlayer.transform.forward = -facing;
 
-                GameLogic.Fight(ref defending.Strength, ref currentBase.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
-                defending.UpdatePlayer();
+                GameLogic.Fight(ref defendingPlayer.Strength, ref currentBase.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+                defendingPlayer.UpdatePlayer();
                 currentBase.UpdateBase();
 
                 // Attacking won
-                if (defending.Strength == 0)
+                if (defendingPlayer.Strength == 0)
                 {
                     yield return new WaitForSeconds(turnDuration);
-                    TryRespawnPlayer(defending);
+                    TryRespawnPlayer(defendingPlayer);
                 }
                 // Defending won
                 else if (currentBase.Strength == 0)
@@ -466,18 +500,18 @@ public class GameManager : MonoBehaviour
             {
                 // Make players face each other
                 player.transform.forward = facing;
-                defending.transform.forward = -facing;
+                defendingPlayer.transform.forward = -facing;
 
-                GameLogic.Fight(ref defending.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
-                defending.UpdatePlayer();
+                GameLogic.Fight(ref defendingPlayer.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+                defendingPlayer.UpdatePlayer();
                 player.UpdatePlayer();
 
                 // Attacking won
-                if (defending.Strength == 0)
+                if (defendingPlayer.Strength == 0)
                 {
                     yield return new WaitForSeconds(turnDuration);
                     move();
-                    TryRespawnPlayer(defending);
+                    TryRespawnPlayer(defendingPlayer);
                 }
                 // Defending won
                 else if (player.Strength == 0)
