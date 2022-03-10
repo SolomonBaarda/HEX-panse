@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviour
     [Header("Terrain Stuff")]
     public TerrainGenerator TerrainGenerator;
     public HexMap HexMap;
+    public List<BiomeSettings> BiomeSettings = new List<BiomeSettings>();
 
     [Header("Game Objects")]
     public Transform GameObjectParent;
@@ -112,6 +113,7 @@ public class GameManager : MonoBehaviour
         }
 
         System.Random r = new System.Random(TerrainGenerator.Seed);
+        BiomeSettings biomes = BiomeSettings[r.Next(0, BiomeSettings.Count)];
 
         List<Vector3Int> playerCities = new List<Vector3Int>();
         List<Vector3Int> enemyCities = new List<Vector3Int>();
@@ -148,7 +150,7 @@ public class GameManager : MonoBehaviour
 
         CameraManager.SetupCameras(cameraCityPositions, centreOfMap);
 
-        HexMap.GenerateMeshFromHexagons();
+        HexMap.GenerateMeshFromHexagons(biomes);
         yield return null;
 
         if (playerCities.Count != 6)
@@ -218,7 +220,7 @@ public class GameManager : MonoBehaviour
             Bases.Add(city);
         }
 
-        Debug.Log($"Playing with {Players.Count} players and {enemyCities.Count} enemies");
+        Debug.Log($"Playing with {Players.Count} players and {enemyCities.Count} enemies on seed {TerrainGenerator.Seed} with biomes {biomes.name}");
 
 
         while (!gameOver)

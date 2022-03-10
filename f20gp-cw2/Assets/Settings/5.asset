@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0df9f19d5af62c64196d3f84355cd9d2, type: 3}
-  m_Name: Alien Biomes 4
+  m_Name: 5
   m_EditorClassIdentifier: 
   Biomes:
   - Biome: 0
-    BiomeColour: {r: 0.8018868, g: 0.35667238, b: 0, a: 1}
+    BiomeColour: {r: 0, g: 0, b: 0, a: 1}
   - Biome: 4
-    BiomeColour: {r: 0.103773594, g: 0.103773594, b: 0.103773594, a: 1}
+    BiomeColour: {r: 0.16470589, g: 0.101960786, b: 0.12156863, a: 1}
   - Biome: 1
-    BiomeColour: {r: 0.18867922, g: 0.18867922, b: 0.18867922, a: 1}
+    BiomeColour: {r: 0.4627451, g: 0.25490198, b: 0.20392157, a: 1}
   - Biome: 5
-    BiomeColour: {r: 0.29416806, g: 0, b: 0.46226418, a: 1}
+    BiomeColour: {r: 0.6784314, g: 0.5137255, b: 0.3137255, a: 1}
   - Biome: 3
-    BiomeColour: {r: 0.122641504, g: 0.122641504, b: 0.122063, a: 1}
+    BiomeColour: {r: 0.6862745, g: 0.627451, b: 0.3764706, a: 1}

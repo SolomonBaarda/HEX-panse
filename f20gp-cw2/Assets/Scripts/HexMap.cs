@@ -13,7 +13,6 @@ public class HexMap : MonoBehaviour
 
     [Header("Grid display settings")]
     [Min(0)] public float HeightOffset = 1.0f;
-    public BiomeSettings BiomeSettings;
 
     public Dictionary<Vector3Int, Hexagon> Hexagons { get; protected set; } = new Dictionary<Vector3Int, Hexagon>();
 
@@ -60,7 +59,7 @@ public class HexMap : MonoBehaviour
         return neighbours;
     }
 
-    public void GenerateMeshFromHexagons()
+    public void GenerateMeshFromHexagons(BiomeSettings settings)
     {
         Dictionary<Biome, List<CombineInstance>> terrainLayers = new Dictionary<Biome, List<CombineInstance>>();
 
@@ -111,7 +110,7 @@ public class HexMap : MonoBehaviour
 
             MeshRenderer r = g.GetComponent<MeshRenderer>();
             r.material = GroundMaterial;
-            r.material.color = BiomeSettings.GetBiomeColour(biome);
+            r.material.color = settings.GetBiomeColour(biome);
         }
     }
 

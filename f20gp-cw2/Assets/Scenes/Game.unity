@@ -4047,7 +4047,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   HeightOffset: 1.5
-  BiomeSettings: {fileID: 11400000, guid: 825007e823039fd4899686ab543ceb16, type: 2}
   TerrainParent: {fileID: 1006054790}
   GroundMaterial: {fileID: 2100000, guid: fcb31d72e9f8675459a7d92fd2ef6493, type: 2}
   TerrainLayerPrefab: {fileID: 8524249256608546586, guid: fd9bf9f81dbaae347816f5b7a955b256, type: 3}
@@ -4076,7 +4075,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NumberOfPlayers: 3
-  PlayerTurn: 0
+  CurrentTurn: 0
   GameTurn: 0
   MouseLayerMask:
     serializedVersion: 2
@@ -4086,6 +4085,15 @@ MonoBehaviour:
   CameraManager: {fileID: 83205441}
   TerrainGenerator: {fileID: 1943052025}
   HexMap: {fileID: 1943052026}
+  BiomeSettings:
+  - {fileID: 11400000, guid: c434eef19e43f044cab597dfc689d57c, type: 2}
+  - {fileID: 11400000, guid: 87a2350bbdf45ed4bad37bbf9aa46f8e, type: 2}
+  - {fileID: 11400000, guid: 2d70036f8d38d7741aaae0a80f00a3e3, type: 2}
+  - {fileID: 11400000, guid: 416452c81154cad4aa91c88f354d812f, type: 2}
+  - {fileID: 11400000, guid: 825007e823039fd4899686ab543ceb16, type: 2}
+  - {fileID: 11400000, guid: 015fc7abe4de25b48ba256e061d22ba6, type: 2}
+  - {fileID: 11400000, guid: dd33f77e2c93bad4ab08354085702096, type: 2}
+  - {fileID: 11400000, guid: ad2c14b13379e2d4c8d33be8a2e6bd33, type: 2}
   GameObjectParent: {fileID: 122895304}
   PlayerPrefab: {fileID: 6645070351525085278, guid: 44f0844191384d24faa3e72c7ea149aa, type: 3}
   PlayerBasePrefab: {fileID: 1061491997912404622, guid: c7120afb008f2c54f9a89155faa87f25, type: 3}
