@@ -22,10 +22,6 @@ public class TerrainGenerator : MonoBehaviour
     public TerrainSettings TerrainSettings;
 
     [Space]
-    public int Seed = 0;
-    public bool DoRandomSeed = false;
-
-    [Space]
     public Tilemap TileTypes;
 
     public TileBase Land;
@@ -46,17 +42,12 @@ public class TerrainGenerator : MonoBehaviour
         TileTypes.GetComponent<TilemapRenderer>().enabled = false;
     }
 
-    public void Generate()
+    public void Generate(int seed)
     {
         if (!IsGenerating)
         {
-            if (DoRandomSeed)
-            {
-                Seed = Noise.RandomSeed;
-            }
-
             IsGenerating = true;
-            StartCoroutine(WaitForGenerate(Seed));
+            StartCoroutine(WaitForGenerate(seed));
         }
     }
 

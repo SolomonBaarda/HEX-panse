@@ -8,7 +8,6 @@ Aaron Molesbury (am375)
 
 Solomon Baarda (sb169)
 
-
 ## Core concept
 Turn based strategy game that works as both a board game and video game. Uses a hexagonal grid for movement and a low-poly, isometric graphical style. 
 

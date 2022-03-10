@@ -53,7 +53,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        StartGame();
+        StartGame(1);
     }
 
     public void Clear()
@@ -82,12 +82,12 @@ public class GameManager : MonoBehaviour
         AllValidMovePreviews.Clear();
     }
 
-    public void StartGame()
+    public void StartGame(int seed)
     {
-        StartCoroutine(PlayGame());
+        StartCoroutine(PlayGame(seed));
     }
 
-    private IEnumerator PlayGame()
+    private IEnumerator PlayGame(int seed)
     {
         if (HUD.Instance == null)
         {
@@ -102,7 +102,7 @@ public class GameManager : MonoBehaviour
             HUD.Instance.PlayerTurnText.text = "";
         }
 
-        TerrainGenerator.Generate();
+        TerrainGenerator.Generate(seed);
 
         // Wait for terrain to generate
         while (TerrainGenerator.IsGenerating)
@@ -110,7 +110,7 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
-        System.Random r = new System.Random(TerrainGenerator.Seed);
+        System.Random r = new System.Random(seed);
         BiomeSettings biomes = BiomeSettings[r.Next(0, BiomeSettings.Count)];
 
         List<Vector3Int> playerCities = new List<Vector3Int>();
@@ -218,7 +218,7 @@ public class GameManager : MonoBehaviour
             Bases.Add(city);
         }
 
-        Debug.Log($"Playing with {Players.Count} players and {enemyCities.Count} enemies on seed {TerrainGenerator.Seed} with biomes {biomes.name}");
+        Debug.Log($"Playing with {Players.Count} players and {enemyCities.Count} enemies on seed {seed} with biomes {biomes.name}");
 
 
         // PLAY GAME HERE
@@ -247,12 +247,7 @@ public class GameManager : MonoBehaviour
                     currentPlayer = p;
                     CurrentTurn = (int)p.ID;
 
-                    // Reinforce each city
-                    foreach (Base c in Bases.Where(city => city.OwnedBy == p))
-                    {
-                        c.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
-                        c.UpdateBase();
-                    }
+
 
                     currentPlayer.ValidMovesThisTurn = CalculateAllValidMovesForPlayer(currentPlayer);
                     UpdateValidMovesHighlight();
@@ -274,6 +269,7 @@ public class GameManager : MonoBehaviour
                 }
             }
 
+            // Remove all dead players
             foreach (Player p in Players)
             {
                 if (p.IsDead)
@@ -287,16 +283,23 @@ public class GameManager : MonoBehaviour
             // Do enemy turn
             foreach (Base b in Bases)
             {
-                if (b.OwnedBy == null && b.Strength > 0)
+                if(b.Strength > 0)
                 {
-                    b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
-                    b.Strength = Mathf.Min(b.Strength, b.MaxStrength);
+                    if(b.OwnedBy == null)
+                    {
+                        b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
+                        b.Strength = Mathf.Min(b.Strength, b.MaxStrength);
+                    }
+                    else
+                    {
+                        b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
+                    }
+
                     b.UpdateBase();
                 }
             }
         }
     }
-
 
     private void Update()
     {
@@ -358,7 +361,7 @@ public class GameManager : MonoBehaviour
 
 
         // Trying to leave a base
-        if (currentBase != null && defendingPlayer == null && defendingBase == null)
+        if (currentBase != null && defendingPlayer == null && (defendingBase == null || defendingBase.Strength <= 0))
         {
             currentBase.PlayerLeaveBase(player, 1);
         }
@@ -373,7 +376,6 @@ public class GameManager : MonoBehaviour
 
             player.transform.forward = facing;
             player.CurrentCell = destinationCell;
-
             player.gameObject.SetActive(true);
             player.MoveToPosition(originalPlayerPosition, destination, turnDuration);
         }

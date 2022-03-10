@@ -10,10 +10,13 @@ public class CameraManager : MonoBehaviour
     [Header("Dolly")]
     public CinemachineVirtualCamera DollyCamera;
     CinemachineTrackedDolly Dolly;
-    public CinemachineSmoothPath DollyPath;
+    public CinemachineSmoothPath DollyPathOuter;
+    public CinemachineSmoothPath DollyPathInner;
 
     public float CameraDollyHeightOffGround = 3.0f;
-    public float CameraDollyDistanceFromCity = 1.75f;
+    public float CameraOuterDollyDistanceFromCity = 1.75f;
+    public float CameraInnerDollyDistanceFromCity = 1.75f;
+
 
     [Space]
     public float ManualCameraSpeed = 0.1f;
@@ -81,7 +84,9 @@ public class CameraManager : MonoBehaviour
 
     public void SetupCameras(List<Vector3> cities, Vector3 centre)
     {
-        CinemachineSmoothPath.Waypoint[] waypoints = new CinemachineSmoothPath.Waypoint[cities.Count];
+        CinemachineSmoothPath.Waypoint[] outerWaypoints = new CinemachineSmoothPath.Waypoint[cities.Count];
+        CinemachineSmoothPath.Waypoint[] innerWaypoints = new CinemachineSmoothPath.Waypoint[cities.Count];
+
 
         // Add them as waypoints for the camera path
         for (int i = 0; i < cities.Count; i++)
@@ -91,13 +96,14 @@ public class CameraManager : MonoBehaviour
 
             Vector3 facing = (new Vector3(centre.x, 0, centre.z) - new Vector3(position.x, 0, position.z)).normalized;
 
-            waypoints[i] = new CinemachineSmoothPath.Waypoint() { position = position - facing * CameraDollyDistanceFromCity };
+            outerWaypoints[i] = new CinemachineSmoothPath.Waypoint() { position = position - facing * CameraOuterDollyDistanceFromCity };
+            innerWaypoints[i] = new CinemachineSmoothPath.Waypoint() { position = position + facing * CameraInnerDollyDistanceFromCity };
         }
 
-        DollyPath.m_Waypoints = waypoints;
+        DollyPathOuter.m_Waypoints = outerWaypoints;
+        DollyPathInner.m_Waypoints = innerWaypoints;
 
         CameraLookAtCentreMap.position = centre;
-
         TopDownCamera.transform.position = centre + Vector3.up * CameraTopDownHeightOffGround;
     }
 

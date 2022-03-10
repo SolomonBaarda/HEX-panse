@@ -3022,6 +3022,7 @@ Transform:
   - {fileID: 515759085}
   - {fileID: 1801311552}
   - {fileID: 1137612143}
+  - {fileID: 1175273125}
   - {fileID: 963194228}
   - {fileID: 1748140025}
   - {fileID: 709026037}
@@ -3044,9 +3045,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MainCamera: {fileID: 963194227}
   DollyCamera: {fileID: 515759084}
-  DollyPath: {fileID: 1137612142}
+  DollyPathOuter: {fileID: 1137612142}
+  DollyPathInner: {fileID: 1175273126}
   CameraDollyHeightOffGround: 3
-  CameraDollyDistanceFromCity: 1.75
+  CameraOuterDollyDistanceFromCity: 1.75
+  CameraInnerDollyDistanceFromCity: 1.75
   ManualCameraSpeed: 0.1
   TopDownCamera: {fileID: 1801311553}
   CameraTopDownHeightOffGround: 11
@@ -3111,7 +3114,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 83205440}
-  m_RootOrder: 7
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &515759083
 GameObject:
@@ -3301,7 +3304,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 83205440}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &836772227
 GameObject:
@@ -3486,7 +3489,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 83205440}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: -74.512, y: 0, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
@@ -3596,7 +3599,7 @@ GameObject:
   - component: {fileID: 1137612143}
   - component: {fileID: 1137612142}
   m_Layer: 0
-  m_Name: Dolly Path
+  m_Name: Dolly Path Outer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3618,7 +3621,7 @@ MonoBehaviour:
   m_Appearance:
     pathColor: {r: 0, g: 1, b: 0, a: 1}
     inactivePathColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    width: 0.2
+    width: 1
   m_Looped: 1
   m_Waypoints:
   - position: {x: 0, y: 0, z: 0}
@@ -3637,6 +3640,58 @@ Transform:
   m_Father: {fileID: 83205440}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1175273124
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1175273125}
+  - component: {fileID: 1175273126}
+  m_Layer: 0
+  m_Name: Dolly Path Inner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1175273125
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1175273124}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 83205440}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1175273126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1175273124}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a200b19ca1a9685429ed7e043c28e904, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Resolution: 2
+  m_Appearance:
+    pathColor: {r: 0, g: 1, b: 0, a: 1}
+    inactivePathColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    width: 0.5
+  m_Looped: 1
+  m_Waypoints:
+  - position: {x: 0, y: 0, z: 0}
+    roll: 0
 --- !u!1 &1306106531
 GameObject:
   m_ObjectHideFlags: 0
@@ -3709,7 +3764,7 @@ SpriteRenderer:
   m_SortingLayer: -1
   m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 8b49d1af2593aca48885e5ac3a495b3d, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.78431374}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.5882353}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -3778,7 +3833,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 83205440}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1748140024
 GameObject:
@@ -3809,7 +3864,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 83205440}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1748140026
 MonoBehaviour:
@@ -4026,8 +4081,6 @@ MonoBehaviour:
     m_RotationOrder: 4
   NumberOfTerraces: 5
   TerrainSettings: {fileID: 11400000, guid: 6077d6d74abdbac4382efe927ceb998b, type: 2}
-  Seed: 156170458
-  DoRandomSeed: 0
   TileTypes: {fileID: 44788842}
   Land: {fileID: 11400000, guid: 206e4c6c491e853458a54f3a2f2b1e3e, type: 2}
   AlwaysLand: {fileID: 11400000, guid: 699a4ba97d85cab448a2bf702a126db6, type: 2}

@@ -15,7 +15,7 @@ public class GameManagerEditor : Editor
         if (Application.isPlaying && GUILayout.Button("Restart"))
         {
             t.Clear();
-            t.StartGame();
+            t.StartGame(Noise.RandomSeed);
         }
 
         if (Application.isPlaying && GUILayout.Button("Clear"))
