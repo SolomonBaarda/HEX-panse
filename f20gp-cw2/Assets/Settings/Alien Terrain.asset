@@ -29,6 +29,8 @@ MonoBehaviour:
   EnemyCityChance: 0.3
   InitialEnemyStrengthMin: 0
   InitialEnemyStrengthMax: 3
+  MaxEnemyStrengthMin: 4
+  MaxEnemyStrengthMax: 10
   NumberSidedDice: 6
   MaxNumberDefendersPerFight: 4
-  MaxNumberAttackersPerFight: 7
+  MaxNumberAttackersPerFight: 6

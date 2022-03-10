@@ -44,8 +44,6 @@ public class GameManager : MonoBehaviour
     Player currentPlayer;
     List<Base> Bases = new List<Base>();
 
-    Vector3 centreOfMap;
-
     bool gameOver = false;
 
     private void Awake()
@@ -140,7 +138,7 @@ public class GameManager : MonoBehaviour
         // Sort points so that thay are in anti clockwise order
         playerCities.Sort((x, y) => -Clockwise.Compare(HexMap.Hexagons[x].CentreOfFaceWorld, HexMap.Hexagons[y].CentreOfFaceWorld, centre));
 
-        centreOfMap = HexMap.Hexagons[centre].CentreOfFaceWorld;
+        Vector3 centreOfMap = HexMap.Hexagons[centre].CentreOfFaceWorld;
 
         List<Vector3> cameraCityPositions = new List<Vector3>();
         foreach (Vector3Int pos in playerCities)
@@ -222,6 +220,8 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"Playing with {Players.Count} players and {enemyCities.Count} enemies on seed {TerrainGenerator.Seed} with biomes {biomes.name}");
 
+
+        // PLAY GAME HERE
 
         while (!gameOver)
         {
@@ -345,6 +345,17 @@ public class GameManager : MonoBehaviour
         Vector3 originalPlayerPosition = player.transform.position;
         GameTurn = true;
 
+        // ---------- LEAVE TILE ----------
+
+        Base baseLeaving = Bases.Find(x => x.Cell == player.CurrentCell && x.OwnedBy == player);
+
+        // Leaving a base
+        if (baseLeaving != null)
+        {
+            baseLeaving.PlayerLeaveCity(player, 1);
+        }
+
+
         void move()
         {
             GameTurn = true;
@@ -365,92 +376,74 @@ public class GameManager : MonoBehaviour
             HUD.Instance.PlayerTurnText.text = "";
         }
 
-        // Leave a city
-        if ((HexMap.Hexagons[player.CurrentCell].IsCity == BaseType.Player || HexMap.Hexagons[player.CurrentCell].IsCity == BaseType.Enemy) && HexMap.Hexagons[destinationCell].IsCity != BaseType.Player)
+        // ---------- MOVE TO NEXT TILE ----------
+
+        Base baseDestination = Bases.Find(x => x.Cell == destinationCell);
+
+        // Trying to enter a base
+        if (baseDestination != null)
         {
-            foreach (Base city in Bases)
+            // Owned by an enemy or another player
+            // Attack the city
+            if (baseDestination.Strength > 0 && (baseDestination.OwnedBy == null || baseDestination.OwnedBy != player))
             {
-                if (city.Cell == player.CurrentCell && city.OwnedBy == player)
+                if (player.Strength <= 0 || baseDestination.Strength <= 0)
                 {
-                    city.PlayerLeaveCity(player, 1);
+                    Debug.LogError("Player or base has strength 0");
+                }
+
+                GameLogic.Fight(ref baseDestination.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+
+                baseDestination.UpdateCity();
+                player.UpdatePlayer();
+
+                // Make the player face the city
+                Vector3 facing = HexMap.Hexagons[destinationCell].CentreOfFaceWorld - originalPlayerPosition;
+                player.transform.forward = new Vector3(facing.x, 0, facing.z);
+
+                // Player won
+                if (baseDestination.Strength == 0)
+                {
                     move();
                     yield return new WaitForSeconds(turnDuration);
-                    break;
+                    baseDestination.PlayerCaptureCity(player);
                 }
-            }
-        }
-        // Enter a city
-        else if (HexMap.Hexagons[destinationCell].IsCity == BaseType.Player || HexMap.Hexagons[destinationCell].IsCity == BaseType.Enemy)
-        {
-            foreach (Base b in Bases)
-            {
-                if (b.Cell == destinationCell)
+                // City won
+                else if (player.Strength == 0)
                 {
-                    // Owned by an enemy or another player
-                    if (b.Strength > 0 && (b.OwnedBy == null || b.OwnedBy != player))
-                    {
-                        if (player.Strength >= 1)
-                        {
-                            Fight(ref b.Strength, ref player.Strength);
+                    TryRespawnPlayer(player);
 
-                            b.UpdateCity();
-                            player.UpdatePlayer();
-
-                            Vector3 destination = HexMap.Hexagons[destinationCell].CentreOfFaceWorld;
-                            Vector3 facing = destination - originalPlayerPosition;
-                            facing.y = 0;
-
-                            player.transform.forward = facing;
-
-                            // Player won
-                            if (b.Strength == 0)
-                            {
-                                move();
-                                yield return new WaitForSeconds(turnDuration);
-                                b.PlayerCaptureCity(player);
-                            }
-                            // City won
-                            else if (player.Strength == 0)
-                            {
-                                TryRespawnPlayer(player);
-
-                                yield return new WaitForSeconds(turnDuration);
-                            }
-                            // Fight not over yet
-                            else
-                            {
-                                yield return new WaitForSeconds(turnDuration);
-                            }
-                        }
-                    }
-                    // Empty or owned by this player
-                    else
-                    {
-                        move();
-                        yield return new WaitForSeconds(turnDuration);
-                        b.PlayerCaptureCity(player);
-                    }
-
-                    // Exit the for loop
-                    break;
+                    yield return new WaitForSeconds(turnDuration);
+                }
+                // Fight not over yet
+                else
+                {
+                    yield return new WaitForSeconds(turnDuration);
                 }
             }
+            // Otherwise just capture it
+            else
+            {
+                move();
+                yield return new WaitForSeconds(turnDuration);
+                baseDestination.PlayerCaptureCity(player);
+            }
         }
+        // Not a base
         else
         {
             Player defending = Players.Find(p => !p.IsDead && p.CurrentCell == destinationCell);
 
-            // Attacking another player
+            // There is a player on that cell
             if (defending != null)
             {
-                Vector3 destination = HexMap.Hexagons[destinationCell].CentreOfFaceWorld;
-                Vector3 facing = destination - originalPlayerPosition;
+                // Make players face each other
+                Vector3 facing = HexMap.Hexagons[destinationCell].CentreOfFaceWorld - originalPlayerPosition;
                 facing.y = 0;
-
                 player.transform.forward = facing;
                 defending.transform.forward = -facing;
 
-                Fight(ref defending.Strength, ref player.Strength);
+                GameLogic.Fight(ref defending.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
 
                 defending.UpdatePlayer();
                 player.UpdatePlayer();
@@ -466,7 +459,6 @@ public class GameManager : MonoBehaviour
                 else if (player.Strength == 0)
                 {
                     yield return new WaitForSeconds(turnDuration);
-
                     TryRespawnPlayer(player);
                 }
                 // Fight not over yet
@@ -474,7 +466,6 @@ public class GameManager : MonoBehaviour
                 {
                     yield return new WaitForSeconds(turnDuration);
                 }
-
             }
             // Just move
             else
@@ -484,48 +475,11 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        // ---------- END OF MOVE ----------
+
         GameTurn = false;
         currentPlayer = null;
     }
-
-    private void Fight(ref int defendingStrength, ref int attackingStrength)
-    {
-        int defenders = Mathf.Min(defendingStrength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight);
-        int attackers = Mathf.Min(attackingStrength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight);
-
-        List<int> attackStrengths = new List<int>();
-        List<int> defendStrengths = new List<int>();
-
-        for (int i = 0; i < attackers; i++)
-        {
-            attackStrengths.Add(Random.Range(0, TerrainGenerator.TerrainSettings.NumberSidedDice + 1));
-        }
-
-        for (int i = 0; i < defenders; i++)
-        {
-            defendStrengths.Add(Random.Range(0, TerrainGenerator.TerrainSettings.NumberSidedDice + 1));
-        }
-
-        attackStrengths.Sort((x, y) => -x.CompareTo(y));
-        defendStrengths.Sort((x, y) => -x.CompareTo(y));
-
-        for (int i = 0; i < Mathf.Min(attackers, defenders); i++)
-        {
-            // Attacker wins
-            if (attackStrengths[i] > defendStrengths[i])
-            {
-                defendingStrength--;
-                Debug.Log("attack won");
-            }
-            // Defenders win
-            else
-            {
-                attackingStrength--;
-                Debug.Log("defenders won");
-            }
-        }
-    }
-
 
     private HashSet<Vector3Int> CalculateAllValidMovesForPlayer(Player player)
     {
@@ -632,9 +586,6 @@ public class GameManager : MonoBehaviour
                 Gizmos.color = p.Colour;
                 Gizmos.DrawRay(HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld, Vector3.up * 10);
             }
-
-            Gizmos.color = Color.green;
-            Gizmos.DrawRay(centreOfMap, Vector3.up * 25);
         }
     }
 }
