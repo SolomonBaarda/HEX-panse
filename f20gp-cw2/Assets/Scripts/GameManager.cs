@@ -306,7 +306,6 @@ public class GameManager : MonoBehaviour
         if (currentPlayer != null && !GameTurn && !gameOver)
         {
             UpdateHoverHighlight();
-
             HUD.Instance.UsingManualDollyText.enabled = CameraManager.IsManualDollyCamera;
 
             if (Input.GetButtonDown("Fire1") && IsHoveringOverCell && currentPlayer.ValidMovesThisTurn.Contains(CellHoveringOver))

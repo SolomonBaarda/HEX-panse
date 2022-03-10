@@ -28,7 +28,7 @@ public class CameraManager : MonoBehaviour
     [Header("Top Down")]
     public CinemachineVirtualCamera TopDownCamera;
     public float CameraTopDownHeightOffGround = 5.0f;
-    bool useDolly = false;
+    bool useDolly = true;
     bool autoDolly = true;
     public bool IsManualDollyCamera => !autoDolly && useDolly;
 
@@ -50,15 +50,14 @@ public class CameraManager : MonoBehaviour
 
     private void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Alpha1))
+        if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             SetCameraModeAutomatic(!autoDolly);
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            useDolly = !useDolly;
-            SetCurrentCamera(useDolly);
+            SetCurrentCamera(!useDolly);
         }
 
         // Manual dolly
@@ -73,7 +72,7 @@ public class CameraManager : MonoBehaviour
         {
             float distance = Vector3.Distance(CameraFollow.transform.position, CameraLookAtCentreMap.transform.position);
 
-            if(distance < InnerDollyDistanceFromCentreThreshold)
+            if (distance < InnerDollyDistanceFromCentreThreshold)
             {
                 InnerDollyCamera.Priority = 1;
                 OuterDollyCamera.Priority = 0;
@@ -82,14 +81,14 @@ public class CameraManager : MonoBehaviour
             {
                 InnerDollyCamera.Priority = 0;
                 OuterDollyCamera.Priority = 1;
-            }    
+            }
         }
     }
 
 
     public void SetCurrentCamera(bool dolly)
     {
-        if(dolly)
+        if (dolly)
         {
             InnerDollyCamera.Priority = 0;
             OuterDollyCamera.Priority = 1;
