@@ -29,6 +29,8 @@ public class CameraManager : MonoBehaviour
     public CinemachineVirtualCamera TopDownCamera;
     public float CameraTopDownHeightOffGround = 5.0f;
     bool useDolly = false;
+    bool autoDolly = true;
+    public bool IsManualDollyCamera => !autoDolly && useDolly;
 
     [Header("Shared")]
     public Transform CameraLookAtPlayer;
@@ -50,18 +52,17 @@ public class CameraManager : MonoBehaviour
     {
         if(Input.GetKeyDown(KeyCode.Alpha1))
         {
-            SetCameraModeAutomatic(!OuterDolly.m_AutoDolly.m_Enabled);
+            SetCameraModeAutomatic(!autoDolly);
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             useDolly = !useDolly;
-
             SetCurrentCamera(useDolly);
         }
 
         // Manual dolly
-        if (!OuterDolly.m_AutoDolly.m_Enabled && useDolly)
+        if (IsManualDollyCamera)
         {
             float distance = Input.GetAxis("Horizontal") * ManualCameraSpeed * Time.deltaTime;
             InnerDolly.m_PathPosition += distance;
@@ -108,6 +109,8 @@ public class CameraManager : MonoBehaviour
     {
         InnerDolly.m_AutoDolly.m_Enabled = automatic;
         OuterDolly.m_AutoDolly.m_Enabled = automatic;
+
+        autoDolly = automatic;
     }
 
     public void SetupCameras(List<Vector3> cities, Vector3 centre)

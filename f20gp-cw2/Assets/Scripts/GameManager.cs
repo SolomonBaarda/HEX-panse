@@ -307,6 +307,8 @@ public class GameManager : MonoBehaviour
         {
             UpdateHoverHighlight();
 
+            HUD.Instance.UsingManualDollyText.enabled = CameraManager.IsManualDollyCamera;
+
             if (Input.GetButtonDown("Fire1") && IsHoveringOverCell && currentPlayer.ValidMovesThisTurn.Contains(CellHoveringOver))
             {
                 // Make the move
@@ -352,6 +354,7 @@ public class GameManager : MonoBehaviour
         UpdateValidMovesHighlight();
         UpdateHoverHighlight();
         HUD.Instance.PlayerTurnText.text = "";
+        HUD.Instance.UsingManualDollyText.enabled = false;
 
         // ---------- LEAVE TILE ----------
 

@@ -3055,7 +3055,7 @@ MonoBehaviour:
   InnerDollyDistanceFromCentreThreshold: 4
   ManualCameraSpeed: 0.1
   TopDownCamera: {fileID: 1801311553}
-  CameraTopDownHeightOffGround: 11
+  CameraTopDownHeightOffGround: 11.5
   CameraLookAtPlayer: {fileID: 709026037}
   CameraLookAtCentreMap: {fileID: 1488704957}
   CameraFollow: {fileID: 160625859}

@@ -9,8 +9,12 @@ public class HUD : MonoBehaviour
 
     public TMP_Text PlayerTurnText;
 
+    public TMP_Text UsingManualDollyText;
+
+
     private void Awake()
     {
         Instance = this;
+        UsingManualDollyText.enabled = false;
     }
 }
