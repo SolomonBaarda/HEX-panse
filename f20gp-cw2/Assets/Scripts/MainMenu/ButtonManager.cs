@@ -12,7 +12,11 @@ public class ButtonManager : MonoBehaviour
     public Button helpButton;
     public GameObject helpMenu;
     public TMP_InputField seedInput;
+    public TMP_InputField playerInput;
     public int seed;
+
+    [Range(2, 6)]
+    public uint NumberOfPlayers;
 
     void Start()
     {
@@ -35,6 +39,25 @@ public class ButtonManager : MonoBehaviour
         {
             seed = seedOut; 
         }
+        else
+        {
+            seed = Random.Range(int.MinValue, int.MaxValue);
+        }
+        if(uint.TryParse(playerInput.text, out uint playerOut))
+        {
+            if(playerOut >=2 && playerOut <= 6)
+            {
+                NumberOfPlayers = playerOut; 
+            }
+            else
+            {
+                NumberOfPlayers = 3;
+            }
+        }
+        else
+        {
+            NumberOfPlayers = 3;
+        }
         AsyncOperation load = SceneManager.LoadSceneAsync("Game", LoadSceneMode.Additive);
         while(!load.isDone)
         {
@@ -42,5 +65,6 @@ public class ButtonManager : MonoBehaviour
         }
         GameManager gameManager = GameObject.FindObjectOfType<GameManager>();
         gameManager.StartGame(seed);
+        gameManager.NumberOfPlayers = NumberOfPlayers;
     }
 }

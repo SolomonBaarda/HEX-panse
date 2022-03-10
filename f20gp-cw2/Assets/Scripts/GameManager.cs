@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     [Range(2, 6)]
-    public uint NumberOfPlayers = 6;
+    public uint NumberOfPlayers;
     public int CurrentTurn;
     public bool GameTurn = false;
 
@@ -335,8 +335,20 @@ public class GameManager : MonoBehaviour
             {
                 Debug.Log($"Player {Players[0].ID} has won");
                 gameOver = true;
+                StartCoroutine(LoadGameOver(Players[0]));
             }
         }
+    }
+
+     IEnumerator LoadGameOver(Player p)
+    {
+        AsyncOperation load = SceneManager.LoadSceneAsync("GameOver", LoadSceneMode.Additive);
+        while(!load.isDone)
+        {
+            yield return null;
+        }
+        GameOver gameOver = GameObject.FindObjectOfType<GameOver>();
+        gameOver.SetWinner(p);    
     }
 
     private IEnumerator MakeMove(Player player, Vector3Int destinationCell, float turnDuration)
