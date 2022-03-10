@@ -8,8 +8,11 @@ public class CameraManager : MonoBehaviour
     public Camera MainCamera;
 
     [Header("Dolly")]
-    public CinemachineVirtualCamera DollyCamera;
-    CinemachineTrackedDolly Dolly;
+    public CinemachineVirtualCamera OuterDollyCamera;
+    CinemachineTrackedDolly OuterDolly;
+    public CinemachineVirtualCamera InnerDollyCamera;
+    CinemachineTrackedDolly InnerDolly;
+
     public CinemachineSmoothPath DollyPathOuter;
     public CinemachineSmoothPath DollyPathInner;
 
@@ -17,6 +20,7 @@ public class CameraManager : MonoBehaviour
     public float CameraOuterDollyDistanceFromCity = 1.75f;
     public float CameraInnerDollyDistanceFromCity = 1.75f;
 
+    public float InnerDollyDistanceFromCentreThreshold = 2.0f;
 
     [Space]
     public float ManualCameraSpeed = 0.1f;
@@ -34,9 +38,11 @@ public class CameraManager : MonoBehaviour
 
     private void Awake()
     {
-        Dolly = DollyCamera.GetCinemachineComponent<CinemachineTrackedDolly>();
+        InnerDolly = InnerDollyCamera.GetCinemachineComponent<CinemachineTrackedDolly>();
+        OuterDolly = OuterDollyCamera.GetCinemachineComponent<CinemachineTrackedDolly>();
 
-        DollyCamera.Priority = 1;
+        InnerDollyCamera.Priority = 1;
+        OuterDollyCamera.Priority = 1;
         TopDownCamera.Priority = 0;
     }
 
@@ -44,7 +50,7 @@ public class CameraManager : MonoBehaviour
     {
         if(Input.GetKeyDown(KeyCode.Alpha1))
         {
-            SetCameraModeAutomatic(!Dolly.m_AutoDolly.m_Enabled);
+            SetCameraModeAutomatic(!OuterDolly.m_AutoDolly.m_Enabled);
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha2))
@@ -54,9 +60,28 @@ public class CameraManager : MonoBehaviour
             SetCurrentCamera(useDolly);
         }
 
-        if (!Dolly.m_AutoDolly.m_Enabled && useDolly)
+        // Manual dolly
+        if (!OuterDolly.m_AutoDolly.m_Enabled && useDolly)
         {
-            Dolly.m_PathPosition += Input.GetAxis("Horizontal") * ManualCameraSpeed * Time.deltaTime;
+            float distance = Input.GetAxis("Horizontal") * ManualCameraSpeed * Time.deltaTime;
+            InnerDolly.m_PathPosition += distance;
+            OuterDolly.m_PathPosition += distance;
+        }
+        // Automatic dolly
+        else
+        {
+            float distance = Vector3.Distance(CameraFollow.transform.position, CameraLookAtCentreMap.transform.position);
+
+            if(distance < InnerDollyDistanceFromCentreThreshold)
+            {
+                InnerDollyCamera.Priority = 1;
+                OuterDollyCamera.Priority = 0;
+            }
+            else
+            {
+                InnerDollyCamera.Priority = 0;
+                OuterDollyCamera.Priority = 1;
+            }    
         }
     }
 
@@ -65,12 +90,14 @@ public class CameraManager : MonoBehaviour
     {
         if(dolly)
         {
-            DollyCamera.Priority = 1;
+            InnerDollyCamera.Priority = 0;
+            OuterDollyCamera.Priority = 1;
             TopDownCamera.Priority = 0;
         }
         else
         {
-            DollyCamera.Priority = 0;
+            InnerDollyCamera.Priority = 0;
+            OuterDollyCamera.Priority = 0;
             TopDownCamera.Priority = 1;
         }
 
@@ -79,7 +106,8 @@ public class CameraManager : MonoBehaviour
 
     public void SetCameraModeAutomatic(bool automatic)
     {
-        Dolly.m_AutoDolly.m_Enabled = automatic;
+        InnerDolly.m_AutoDolly.m_Enabled = automatic;
+        OuterDolly.m_AutoDolly.m_Enabled = automatic;
     }
 
     public void SetupCameras(List<Vector3> cities, Vector3 centre)
@@ -125,5 +153,12 @@ public class CameraManager : MonoBehaviour
 
         position = Vector3.zero;
         return false;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+
+        Gizmos.DrawWireSphere(CameraLookAtCentreMap.transform.position, InnerDollyDistanceFromCentreThreshold);
     }
 }
