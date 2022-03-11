@@ -45,9 +45,11 @@ public class GameManager : MonoBehaviour
     List<Base> Bases = new List<Base>();
 
     bool gameOver = false;
+    int globalTurn = 0;
 
     private void Awake()
     {
+        QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;
     }
 
@@ -223,6 +225,7 @@ public class GameManager : MonoBehaviour
 
         // PLAY GAME HERE
 
+        globalTurn = 0;
         while (!gameOver)
         {
             foreach (Player p in Players)
@@ -271,6 +274,8 @@ public class GameManager : MonoBehaviour
                 }
             }
 
+            globalTurn++;
+
             // Remove all dead players
             foreach (Player p in Players)
             {
@@ -282,22 +287,27 @@ public class GameManager : MonoBehaviour
 
             Players.RemoveAll(p => p.IsDead);
 
-            // Do enemy turn
-            foreach (Base b in Bases)
+            if(globalTurn >= TerrainGenerator.TerrainSettings.GlobalTurnsRequiredForReinforcements)
             {
-                if(b.Strength > 0)
-                {
-                    if(b.OwnedBy == null)
-                    {
-                        b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
-                        b.Strength = Mathf.Min(b.Strength, b.MaxStrength);
-                    }
-                    else
-                    {
-                        b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCityPerTurn;
-                    }
+                globalTurn = 0;
 
-                    b.UpdateBase();
+                // Do reinforcements
+                foreach (Base b in Bases)
+                {
+                    if (b.Strength > 0)
+                    {
+                        if (b.OwnedBy == null)
+                        {
+                            b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCity;
+                            b.Strength = Mathf.Min(b.Strength, b.MaxStrength);
+                        }
+                        else
+                        {
+                            b.Strength += TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCity;
+                        }
+
+                        b.UpdateBase();
+                    }
                 }
             }
         }

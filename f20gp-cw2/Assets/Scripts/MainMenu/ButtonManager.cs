@@ -24,6 +24,7 @@ public class ButtonManager : MonoBehaviour
 
     private void Awake()
     {
+        QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;
         seedInput.text = Noise.RandomSeed.ToString();
     }
