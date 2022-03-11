@@ -27,11 +27,11 @@ MonoBehaviour:
   ReinforcementStrengthPerCityPerTurn: 1
   MaxPlayerMovementPerTurn: 2
   MaxPlayerMovementPerTurnInBase: 4
-  EnemyCityChance: 0.3
+  EnemyCityChance: 0.5
   InitialEnemyStrengthMin: 0
   InitialEnemyStrengthMax: 3
-  MaxEnemyStrengthMin: 4
-  MaxEnemyStrengthMax: 10
+  MaxEnemyStrengthMin: 3
+  MaxEnemyStrengthMax: 6
   NumberSidedDice: 6
-  MaxNumberDefendersPerFight: 4
-  MaxNumberAttackersPerFight: 6
+  MaxNumberDefendersPerFight: 7
+  MaxNumberAttackersPerFight: 10
