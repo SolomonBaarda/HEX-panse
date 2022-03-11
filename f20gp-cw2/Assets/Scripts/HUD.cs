@@ -11,6 +11,17 @@ public class HUD : MonoBehaviour
 
     public TMP_Text UsingManualDollyText;
 
+    public Canvas Canvas;
+
+    private void Start()
+    {
+        Visible(false);
+    }
+
+    public void Visible(bool visible)
+    {
+        Canvas.gameObject.SetActive(visible);
+    }
 
     private void Awake()
     {

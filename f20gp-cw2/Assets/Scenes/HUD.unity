@@ -579,6 +579,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PlayerTurnText: {fileID: 66316340}
   UsingManualDollyText: {fileID: 1572640438}
+  Canvas: {fileID: 1344053239}
 --- !u!1 &1572640436
 GameObject:
   m_ObjectHideFlags: 0

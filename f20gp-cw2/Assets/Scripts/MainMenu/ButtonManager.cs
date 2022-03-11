@@ -17,6 +17,7 @@ public class ButtonManager : MonoBehaviour
 
     public Slider NumberPlayersSlider;
     public TMP_Text NumberPlayersText;
+    public Button Quit;
 
     [Range(2, 6)]
     public uint NumberOfPlayers;
@@ -33,6 +34,7 @@ public class ButtonManager : MonoBehaviour
         helpButton.onClick.AddListener(HelpPressed);
         randomSeedButton.onClick.AddListener(() => seedInput.text = Noise.RandomSeed.ToString());
         NumberPlayersSlider.onValueChanged.AddListener((value) => NumberPlayersText.text = uint.Parse(value.ToString()).ToString());
+        Quit.onClick.AddListener(() => Application.Quit());
     }
     void CreateGamePressed()
     {

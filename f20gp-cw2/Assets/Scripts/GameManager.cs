@@ -254,11 +254,13 @@ public class GameManager : MonoBehaviour
 
                     HUD.Instance.PlayerTurnText.text = $"Current turn: player {CurrentTurn}";
                     HUD.Instance.PlayerTurnText.color = p.Colour;
+                    HUD.Instance.Visible(true);
 
                     if (currentPlayer.ValidMovesThisTurn.Count == 0)
                     {
                         Debug.LogError($"Player {currentPlayer.ID} can't make any moves. Skipping turn");
                         currentPlayer = null;
+                        HUD.Instance.Visible(false);
                     }
 
                     // Wait here while it is this players turn
@@ -314,6 +316,11 @@ public class GameManager : MonoBehaviour
                 StartCoroutine(MakeMove(currentPlayer, CellHoveringOver, 1.0f));
             }
         }
+
+        if(Input.GetButton("Exit"))
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 
     private void TryRespawnPlayer(Player player)
@@ -364,8 +371,7 @@ public class GameManager : MonoBehaviour
         // Hide previews etc
         UpdateValidMovesHighlight();
         UpdateHoverHighlight();
-        HUD.Instance.PlayerTurnText.text = "";
-        HUD.Instance.UsingManualDollyText.enabled = false;
+        HUD.Instance.Visible(false);
 
         // ---------- LEAVE TILE ----------
 
