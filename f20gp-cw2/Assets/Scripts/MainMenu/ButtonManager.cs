@@ -10,18 +10,29 @@ public class ButtonManager : MonoBehaviour
 
     public Button createGameButton;
     public Button helpButton;
+    public Button randomSeedButton;
     public GameObject helpMenu;
     public TMP_InputField seedInput;
-    public TMP_InputField playerInput;
     public int seed;
+
+    public Slider NumberPlayersSlider;
+    public TMP_Text NumberPlayersText;
 
     [Range(2, 6)]
     public uint NumberOfPlayers;
+
+    private void Awake()
+    {
+        Application.targetFrameRate = 60;
+        seedInput.text = Noise.RandomSeed.ToString();
+    }
 
     void Start()
     {
         createGameButton.onClick.AddListener(CreateGamePressed);
         helpButton.onClick.AddListener(HelpPressed);
+        randomSeedButton.onClick.AddListener(() => seedInput.text = Noise.RandomSeed.ToString());
+        NumberPlayersSlider.onValueChanged.AddListener((value) => NumberPlayersText.text = uint.Parse(value.ToString()).ToString());
     }
     void CreateGamePressed()
     {
@@ -35,36 +46,42 @@ public class ButtonManager : MonoBehaviour
 
     IEnumerator LoadGame()
     {
-        if(int.TryParse(seedInput.text, out int seedOut))
+        if (int.TryParse(seedInput.text, out int seedOut))
         {
-            seed = seedOut; 
+            seed = seedOut;
         }
         else
         {
-            seed = Random.Range(int.MinValue, int.MaxValue);
+            seed = Noise.RandomSeed;
         }
-        if(uint.TryParse(playerInput.text, out uint playerOut))
+
+        if (uint.TryParse(NumberPlayersSlider.value.ToString(), out uint playerOut))
         {
-            if(playerOut >=2 && playerOut <= 6)
+            if (playerOut >= 2 && playerOut <= 6)
             {
-                NumberOfPlayers = playerOut; 
+                NumberOfPlayers = playerOut;
             }
             else
             {
-                NumberOfPlayers = 3;
+                NumberOfPlayers = 2;
             }
         }
         else
         {
-            NumberOfPlayers = 3;
+            NumberOfPlayers = 2;
         }
+
+        Scene current = SceneManager.GetActiveScene();
+
         AsyncOperation load = SceneManager.LoadSceneAsync("Game", LoadSceneMode.Additive);
-        while(!load.isDone)
+        while (!load.isDone)
         {
             yield return null;
         }
         GameManager gameManager = GameObject.FindObjectOfType<GameManager>();
         gameManager.StartGame(seed);
         gameManager.NumberOfPlayers = NumberOfPlayers;
+
+        SceneManager.UnloadSceneAsync(current);
     }
 }

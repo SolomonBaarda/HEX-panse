@@ -51,6 +51,11 @@ public class GameManager : MonoBehaviour
         Application.targetFrameRate = 60;
     }
 
+    private void Start()
+    {
+        //StartGame(0);
+    }
+
     public void Clear()
     {
         StopAllCoroutines();
@@ -370,7 +375,7 @@ public class GameManager : MonoBehaviour
 
 
         // Trying to leave a base
-        if (currentBase != null && defendingPlayer == null && (defendingBase == null || defendingBase.Strength <= 0))
+        if (currentBase != null && defendingPlayer == null && (defendingBase == null || defendingBase.Strength <= 0 || defendingBase.OwnedBy == player))
         {
             currentBase.PlayerLeaveBase(player, 1);
         }
