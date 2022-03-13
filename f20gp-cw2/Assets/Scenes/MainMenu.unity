@@ -808,20 +808,21 @@ MonoBehaviour:
       m_Calls: []
   m_text: "HEX-panse is a turn based strategy game that works as both a board game
     and video game. It uses a hexagonal grid for movement combined with a low-poly,
-    isometric graphical style and features a randomly generated game board with dice
-    roll mechanics for combat. 2-6 players can be dropped into an alien planet, where
-    they must fight for control of the wide expanse of land.\n\nEach player begins
-    the game with a base and a player Mech and should aim to capture the vacant cities
-    in order to gain more strength. For every city the player \"owns\", their Mech
-    player will gain additional strength, snowballing into an unstoppable force.
-    Players must battle each other and try to be the last player standing. \n\nTo
-    move the player, select from one of the available adjacent tiles. Players can
-    take cities with 0 strength with ease but for cities with greater strength, the
-    player must wait until the next turn to begin their attack. This is also true
-    for player versus player combat; to attack another player, you must be on an
-    adjacent tile.\n\nThe fight difficulty is determined by the difference in strength
-    of the two tiles, if it's a large difference then fight will be quick and easy.
-    However similar strength tiles will result in a much more difficult campaign."
+    isometric graphical style, and features a randomly generated game board. The
+    game is designed for 2-6 players and they must fight using dice roll mechanics,
+    to gain control of the wide expanse of land on an unfamilliar alien planet.\n\nEach
+    player begins the game with a base and a player Mech and should aim to capture
+    the vacant cities in order to gain more strength. For every city the player \"owns\",
+    their Mech player will gain additional strength, snowballing into an unstoppable
+    force. Players must battle each other and try to be the last player standing.
+    \n\nTo move the player, select from one of the available adjacent tiles. Players
+    can take cities with 0 strength with ease but for cities with greater strength,
+    the player must wait until the next turn to begin their attack. This is also
+    true for player versus player combat; to attack another player, you must be on
+    an adjacent tile.\n\nThe fight difficulty is determined by the difference in
+    strength of the two tiles, if it's a large difference then fight will be quick
+    and easy. However similar strength tiles will result in a much more difficult
+    campaign."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
