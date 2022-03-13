@@ -367,6 +367,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator LoadGameOver(Player p)
     {
+        Scene current = SceneManager.GetActiveScene();
         AsyncOperation load = SceneManager.LoadSceneAsync("GameOver", LoadSceneMode.Additive);
         while (!load.isDone)
         {
@@ -374,6 +375,7 @@ public class GameManager : MonoBehaviour
         }
         GameOver gameOver = GameObject.FindObjectOfType<GameOver>();
         gameOver.SetWinner(p);
+        SceneManager.UnloadSceneAsync(current);
     }
 
     private IEnumerator MakeMove(Player player, Vector3Int destinationCell, float turnDuration)
