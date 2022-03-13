@@ -52,7 +52,6 @@ MonoBehaviour:
   StrengthText: {fileID: 4330655482201049216}
   DefaultColour: {r: 1, g: 1, b: 1, a: 1}
   Renderer: {fileID: 1492219403883637550}
-  Mesh: {fileID: 3697907114656473060}
 --- !u!1 &1063220122284583710
 GameObject:
   m_ObjectHideFlags: 0
@@ -109,7 +108,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  - {fileID: 2180264, guid: 0ed67f518bb8dcc4f89d9df7030dcfd1, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -153,8 +152,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'strength: 0'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0ed67f518bb8dcc4f89d9df7030dcfd1, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 0ed67f518bb8dcc4f89d9df7030dcfd1, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -178,13 +177,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 1
-  m_fontSizeBase: 1
+  m_fontSize: 1.5
+  m_fontSizeBase: 1.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 1024
   m_textAlignment: 65535
