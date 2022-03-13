@@ -13,6 +13,7 @@ public class Base : MonoBehaviour
 
     [Space]
     public TMP_Text StrengthText;
+    public TMP_Text StrengthChangeText;
 
     [Space]
     public Color DefaultColour = Color.white;
@@ -21,9 +22,15 @@ public class Base : MonoBehaviour
     public Renderer Renderer;
 
 
+    private void Awake()
+    {
+        StrengthChangeText.enabled = false;
+    }
+
     private void Update()
     {
         StrengthText.transform.rotation = Camera.main.transform.rotation;
+        StrengthChangeText.transform.rotation = Camera.main.transform.rotation;
     }
 
     public void UpdateBase()
@@ -84,5 +91,27 @@ public class Base : MonoBehaviour
 
         UpdateBase();
         player.UpdatePlayer();
+    }
+
+    public void DisplayStrengthChangeText(int damage, float seconds)
+    {
+        IEnumerator Display()
+        {
+            StrengthChangeText.text = damage.ToString();
+            StrengthChangeText.color = damage < 0 ? Color.red : Color.green;
+            StrengthChangeText.enabled = true;
+
+            float timer = 0;
+
+            while (timer < seconds)
+            {
+                yield return null;
+                timer += Time.deltaTime;
+            }
+
+            StrengthChangeText.enabled = false;
+        }
+
+        StartCoroutine(Display());
     }
 }

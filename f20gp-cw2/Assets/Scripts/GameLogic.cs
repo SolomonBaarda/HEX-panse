@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class GameLogic
 {
-    public static void Fight(ref int defendingStrength, ref int attackingStrength, int maxAttackers, int maxDefenders, int numberSidedDice = 6)
+    public static void Fight(ref int defendingStrength, ref int attackingStrength, int maxAttackers, int maxDefenders, out int defenderDamageTaken, out int attackerDamageTaken, int numberSidedDice = 6)
     {
         int numberOfDefenders = Mathf.Min(defendingStrength, maxDefenders);
         int numberOfAttackers = Mathf.Min(attackingStrength, maxAttackers);
@@ -25,26 +25,27 @@ public static class GameLogic
         attackStrengths.Sort((x, y) => -x.CompareTo(y));
         defendStrengths.Sort((x, y) => -x.CompareTo(y));
 
-        int defendersKilled = 0, attackersKilled = 0;
+        defenderDamageTaken = 0;
+        attackerDamageTaken = 0;
 
         for (int i = 0; i < Mathf.Min(numberOfAttackers, numberOfDefenders); i++)
         {
             // Attacker wins
             if (attackStrengths[i] > defendStrengths[i])
             {
-                defendersKilled++;
+                defenderDamageTaken--;
             }
             // Defenders win
             else
             {
-                attackersKilled++;
+                attackerDamageTaken--;
             }
         }
 
-        defendingStrength -= defendersKilled;
-        attackingStrength -= attackersKilled;
+        defendingStrength += defenderDamageTaken;
+        attackingStrength += attackerDamageTaken;
 
-        Debug.Log($"Attackers lost {attackersKilled} and defenders lost {defendersKilled}");
+        Debug.Log($"Attackers took {attackerDamageTaken} damage and defenders took {defenderDamageTaken} damage");
     }
 
 

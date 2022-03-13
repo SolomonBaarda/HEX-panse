@@ -16,6 +16,7 @@ public class Player : MonoBehaviour
 
     [Space]
     public TMP_Text StrengthText;
+    public TMP_Text StrengthChangeText;
 
     [Space]
     public ParticleSystem Particle;
@@ -23,9 +24,15 @@ public class Player : MonoBehaviour
     [Space]
     public bool IsDead = false;
 
+    private void Awake()
+    {
+        StrengthChangeText.enabled = false;
+    }
+
     private void Update()
     {
         StrengthText.transform.rotation = Camera.main.transform.rotation;
+        StrengthChangeText.transform.rotation = Camera.main.transform.rotation;
     }
 
     public void UpdatePlayer()
@@ -45,7 +52,24 @@ public class Player : MonoBehaviour
 
     public void MoveToPosition(Vector3 start, Vector3 destination, float timeSeconds)
     {
-        StartCoroutine(MoveThroughPositions(start, destination, timeSeconds));
+        IEnumerator MoveThroughPositions()
+        {
+            Particle.Play();
+            float timer = 0;
+            Vector3 direction = destination - start;
+
+            while (timer < timeSeconds)
+            {
+                transform.position = start + direction * timer / timeSeconds;
+
+                yield return null;
+                timer += Time.deltaTime;
+            }
+
+            Particle.Stop();
+        }
+
+        StartCoroutine(MoveThroughPositions());
     }
 
     public void Kill()
@@ -54,20 +78,26 @@ public class Player : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private IEnumerator MoveThroughPositions(Vector3 start, Vector3 destination, float timeSeconds)
+    public void DisplayStrengthChangeText(int damage, float seconds)
     {
-        Particle.Play();
-        float timer = 0;
-        Vector3 direction = destination - start;
-
-        while (timer < timeSeconds)
+        IEnumerator Display()
         {
-            transform.position = start + direction * timer / timeSeconds;
-            
-            yield return null;
-            timer += Time.deltaTime;
+            StrengthChangeText.text = damage.ToString();
+            StrengthChangeText.color = damage < 0 ? Color.red : Color.green;
+            StrengthChangeText.enabled = true;
+
+            float timer = 0;
+
+            while (timer < seconds)
+            {
+                yield return null;
+                timer += Time.deltaTime;
+            }
+
+            StrengthChangeText.enabled = false;
         }
 
-        Particle.Stop();
+        StartCoroutine(Display());
     }
+
 }

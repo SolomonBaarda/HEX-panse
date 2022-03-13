@@ -287,7 +287,7 @@ public class GameManager : MonoBehaviour
 
             Players.RemoveAll(p => p.IsDead);
 
-            if(globalTurn >= TerrainGenerator.TerrainSettings.GlobalTurnsRequiredForReinforcements)
+            if (globalTurn >= TerrainGenerator.TerrainSettings.GlobalTurnsRequiredForReinforcements)
             {
                 globalTurn = 0;
 
@@ -307,6 +307,7 @@ public class GameManager : MonoBehaviour
                         }
 
                         b.UpdateBase();
+                        b.DisplayStrengthChangeText(TerrainGenerator.TerrainSettings.ReinforcementStrengthPerCity, 2);
                     }
                 }
             }
@@ -327,7 +328,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if(Input.GetButton("Exit"))
+        if (Input.GetButton("Exit"))
         {
             SceneManager.LoadScene("MainMenu");
         }
@@ -362,15 +363,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
-     IEnumerator LoadGameOver(Player p)
+    IEnumerator LoadGameOver(Player p)
     {
         AsyncOperation load = SceneManager.LoadSceneAsync("GameOver", LoadSceneMode.Additive);
-        while(!load.isDone)
+        while (!load.isDone)
         {
             yield return null;
         }
         GameOver gameOver = GameObject.FindObjectOfType<GameOver>();
-        gameOver.SetWinner(p);    
+        gameOver.SetWinner(p);
     }
 
     private IEnumerator MakeMove(Player player, Vector3Int destinationCell, float turnDuration)
@@ -421,12 +422,22 @@ public class GameManager : MonoBehaviour
             if (defendingBase.Strength > 0 && (defendingBase.OwnedBy == null || defendingBase.OwnedBy != player))
             {
                 // Base to base combat
-                if(currentBase != null)
+                if (currentBase != null)
                 {
-                    GameLogic.Fight(ref defendingBase.Strength, ref currentBase.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+                    GameLogic.Fight(ref defendingBase.Strength, ref currentBase.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight, out int defendingDamage, out int attackingDamage);
 
                     defendingBase.UpdateBase();
                     currentBase.UpdateBase();
+
+                    if (defendingDamage != 0)
+                    {
+                        defendingBase.DisplayStrengthChangeText(defendingDamage, turnDuration);
+                    }
+
+                    if (attackingDamage != 0)
+                    {
+                        currentBase.DisplayStrengthChangeText(attackingDamage, turnDuration);
+                    }
 
                     // Player won
                     if (defendingBase.Strength == 0)
@@ -456,10 +467,20 @@ public class GameManager : MonoBehaviour
                         Debug.LogError("Player or base has strength 0");
                     }
 
-                    GameLogic.Fight(ref defendingBase.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+                    GameLogic.Fight(ref defendingBase.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight, out int defendingDamage, out int attackingDamage);
 
                     defendingBase.UpdateBase();
                     player.UpdatePlayer();
+
+                    if(defendingDamage != 0)
+                    {
+                        defendingBase.DisplayStrengthChangeText(defendingDamage, turnDuration);
+                    }
+
+                    if (attackingDamage != 0)
+                    {
+                        player.DisplayStrengthChangeText(attackingDamage, turnDuration);
+                    }
 
                     // Make the player face the city
                     Vector3 facing = HexMap.Hexagons[destinationCell].CentreOfFaceWorld - originalPlayerPosition;
@@ -505,9 +526,19 @@ public class GameManager : MonoBehaviour
             {
                 defendingPlayer.transform.forward = -facing;
 
-                GameLogic.Fight(ref defendingPlayer.Strength, ref currentBase.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+                GameLogic.Fight(ref defendingPlayer.Strength, ref currentBase.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight, out int defendingDamage, out int attackingDamage);
                 defendingPlayer.UpdatePlayer();
                 currentBase.UpdateBase();
+
+                if (defendingDamage != 0)
+                {
+                    defendingPlayer.DisplayStrengthChangeText(defendingDamage, turnDuration);
+                }
+
+                if (attackingDamage != 0)
+                {
+                    currentBase.DisplayStrengthChangeText(attackingDamage, turnDuration);
+                }
 
                 // Attacking won
                 if (defendingPlayer.Strength == 0)
@@ -534,9 +565,19 @@ public class GameManager : MonoBehaviour
                 player.transform.forward = facing;
                 defendingPlayer.transform.forward = -facing;
 
-                GameLogic.Fight(ref defendingPlayer.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight);
+                GameLogic.Fight(ref defendingPlayer.Strength, ref player.Strength, TerrainGenerator.TerrainSettings.MaxNumberAttackersPerFight, TerrainGenerator.TerrainSettings.MaxNumberDefendersPerFight, out int defendingDamage, out int attackingDamage);
                 defendingPlayer.UpdatePlayer();
                 player.UpdatePlayer();
+
+                if (defendingDamage != 0)
+                {
+                    defendingPlayer.DisplayStrengthChangeText(defendingDamage, turnDuration);
+                }
+
+                if (attackingDamage != 0)
+                {
+                    player.DisplayStrengthChangeText(attackingDamage, turnDuration);
+                }
 
                 // Attacking won
                 if (defendingPlayer.Strength == 0)
