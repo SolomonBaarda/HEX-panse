@@ -354,11 +354,13 @@ public class GameManager : MonoBehaviour
             Debug.Log($"Player {player.ID} has died");
             player.Kill();
 
-            if (Players.Where(p => !p.IsDead).Count() == 1)
+            List<Player> all = Players.FindAll(p => !p.IsDead);
+
+            if (all.Count() == 1)
             {
-                Debug.Log($"Player {Players[0].ID} has won");
+                Debug.Log($"Player {all[0].ID} has won");
                 gameOver = true;
-                StartCoroutine(LoadGameOver(Players[0]));
+                StartCoroutine(LoadGameOver(all[0]));
             }
         }
     }
