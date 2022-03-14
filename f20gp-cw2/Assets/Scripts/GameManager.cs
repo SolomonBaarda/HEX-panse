@@ -251,7 +251,7 @@ public class GameManager : MonoBehaviour
                     currentPlayer.ValidMovesThisTurn = CalculateAllValidMovesForPlayer(currentPlayer);
                     UpdateValidMovesHighlight();
 
-                    HUD.Instance.PlayerTurnText.text = $"Current turn: player {currentPlayer.Nickname}";
+                    HUD.Instance.PlayerTurnText.text = $"Current turn: Team {currentPlayer.Nickname}";
                     HUD.Instance.PlayerTurnText.color = p.Colour;
                     HUD.Instance.Visible(true);
 
