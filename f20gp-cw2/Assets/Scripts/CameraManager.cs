@@ -43,9 +43,7 @@ public class CameraManager : MonoBehaviour
         InnerDolly = InnerDollyCamera.GetCinemachineComponent<CinemachineTrackedDolly>();
         OuterDolly = OuterDollyCamera.GetCinemachineComponent<CinemachineTrackedDolly>();
 
-        InnerDollyCamera.Priority = 1;
-        OuterDollyCamera.Priority = 1;
-        TopDownCamera.Priority = 0;
+        SetCurrentCamera(true);
     }
 
     private void Update()
@@ -53,6 +51,7 @@ public class CameraManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             SetCameraModeAutomatic(!autoDolly);
+            useDolly = true;
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha2))
@@ -98,7 +97,7 @@ public class CameraManager : MonoBehaviour
         {
             InnerDollyCamera.Priority = 0;
             OuterDollyCamera.Priority = 0;
-            TopDownCamera.Priority = 1;
+            TopDownCamera.Priority = 10;
         }
 
         useDolly = dolly;
@@ -108,7 +107,6 @@ public class CameraManager : MonoBehaviour
     {
         InnerDolly.m_AutoDolly.m_Enabled = automatic;
         OuterDolly.m_AutoDolly.m_Enabled = automatic;
-
         autoDolly = automatic;
     }
 

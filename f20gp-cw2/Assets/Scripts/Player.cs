@@ -84,7 +84,7 @@ public class Player : MonoBehaviour
     {
         IEnumerator Display()
         {
-            StrengthChangeText.text = damage.ToString();
+            StrengthChangeText.text = damage <= 0 ? damage.ToString() : $"+{damage}";
             StrengthChangeText.color = damage < 0 ? Color.red : Color.green;
             StrengthChangeText.enabled = true;
 

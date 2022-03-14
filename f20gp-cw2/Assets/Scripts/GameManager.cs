@@ -241,7 +241,7 @@ public class GameManager : MonoBehaviour
                     Vector3 playerPositionWorld = HexMap.Hexagons[p.CurrentCell].CentreOfFaceWorld;
                     CameraManager.CameraFollow.position = playerPositionWorld;
                     CameraManager.CameraLookAtPlayer.position = playerPositionWorld;
-                    CameraManager.SetCameraModeAutomatic(true);
+                    //CameraManager.SetCameraModeAutomatic(true);
 
                     // Wait for the camera to move there
                     yield return new WaitForSeconds(2.0f);
