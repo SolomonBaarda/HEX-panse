@@ -8,7 +8,6 @@ public class GameManager : MonoBehaviour
 {
     [Range(2, 6)]
     public uint NumberOfPlayers;
-    public int CurrentTurn;
     public bool GameTurn = false;
 
     public LayerMask MouseLayerMask;
@@ -248,14 +247,11 @@ public class GameManager : MonoBehaviour
 
                     // Update player turn
                     currentPlayer = p;
-                    CurrentTurn = (int)p.ID;
-
-
 
                     currentPlayer.ValidMovesThisTurn = CalculateAllValidMovesForPlayer(currentPlayer);
                     UpdateValidMovesHighlight();
 
-                    HUD.Instance.PlayerTurnText.text = $"Current turn: player {CurrentTurn}";
+                    HUD.Instance.PlayerTurnText.text = $"Current turn: player {currentPlayer.Nickname}";
                     HUD.Instance.PlayerTurnText.color = p.Colour;
                     HUD.Instance.Visible(true);
 
