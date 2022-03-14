@@ -18,7 +18,7 @@ public class GameOver : MonoBehaviour
 
     void UpdateText()
     {
-        header.text = $"Congratulations Player {winner.ID}";
+        header.text = $"Congratulations Player {winner.Nickname}";
         header.color = winner.Colour;
     }
 

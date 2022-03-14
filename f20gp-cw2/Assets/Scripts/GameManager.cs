@@ -193,9 +193,9 @@ public class GameManager : MonoBehaviour
 
             // Init player
             GameObject p = Instantiate(PlayerPrefab, HexMap.Hexagons[cityCell].CentreOfFaceWorld, Quaternion.identity, GameObjectParent);
-            p.name = $"Player {i}";
+            p.name = PlayerSettings.GetPlayerNickname(i);
             Player player = p.GetComponent<Player>();
-            player.Init(i, PlayerSettings.GetPlayerColour(i), cityCell, TerrainGenerator.TerrainSettings.InitialPlayerStrength);
+            player.Init(i, PlayerSettings.GetPlayerNickname(i), PlayerSettings.GetPlayerColour(i), cityCell, TerrainGenerator.TerrainSettings.InitialPlayerStrength);
             Players.Add(player);
 
             // Init player city
@@ -261,7 +261,7 @@ public class GameManager : MonoBehaviour
 
                     if (currentPlayer.ValidMovesThisTurn.Count == 0)
                     {
-                        Debug.LogError($"Player {currentPlayer.ID} can't make any moves. Skipping turn");
+                        Debug.LogError($"Player {currentPlayer.Nickname} can't make any moves. Skipping turn");
                         currentPlayer = null;
                         HUD.Instance.Visible(false);
                     }

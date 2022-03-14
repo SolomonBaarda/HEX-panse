@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     public Color Colour;
     public Vector3Int CurrentCell;
     public int Strength;
+    public string Nickname;
 
     public HashSet<Vector3Int> ValidMovesThisTurn;
 
@@ -40,9 +41,10 @@ public class Player : MonoBehaviour
         StrengthText.text = $"strength: {Strength}";
     }
 
-    public void Init(uint id, Color colour, Vector3Int startingCity, int strength)
+    public void Init(uint id, string nickname, Color colour, Vector3Int startingCity, int strength)
     {
         ID = id;
+        Nickname = nickname;
         Colour = colour;
         CurrentCell = startingCity;
         Strength = strength;

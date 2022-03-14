@@ -13,6 +13,7 @@ public class PlayerSettings : ScriptableObject
     {
         public uint ID;
         public Color Colour;
+        public string Nickname;
     }
 
     public Color GetPlayerColour(uint ID)
@@ -24,6 +25,18 @@ public class PlayerSettings : ScriptableObject
         catch (System.Exception)
         {
             return Color.white;
+        }
+    }
+
+    public string GetPlayerNickname(uint ID)
+    {
+        try
+        {
+            return Players.First(x => x.ID == ID).Nickname;
+        }
+        catch (System.Exception)
+        {
+            return "";
         }
     }
 }
