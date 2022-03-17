@@ -120,7 +120,7 @@ public class HexMap : MonoBehaviour
             if(biome == Biome.None)
             {
                 r.material.EnableKeyword("_EMISSION");
-                r.material.SetColor("_EmissionColor", colour * Mathf.Pow(2, 6.0f));
+                r.material.SetColor("_EmissionColor", colour);
             }
         }
     }
