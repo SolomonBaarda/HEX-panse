@@ -16,8 +16,11 @@ public class Base : MonoBehaviour
     public TMP_Text StrengthChangeText;
 
     [Space]
-    public Color DefaultColour = Color.white;
+    public Color DefaultUnclaimedColour = Color.white;
+    public Color DefaultColour = Color.black;
 
+    [Space]
+    public ParticleSystem Particle;
 
     public Renderer Renderer;
 
@@ -35,14 +38,33 @@ public class Base : MonoBehaviour
 
     public void UpdateBase()
     {
-        StrengthText.text = $"strength: {Strength}";
+        StrengthText.text = Strength > 0 ? $"health: {Strength}" : "";
 
-        if(Strength <= 0)
+        if (Strength <= 0)
         {
             OwnedBy = null;
         }
 
-        Renderer.material.color = OwnedBy != null ? OwnedBy.Colour : DefaultColour;
+        if (OwnedBy != null)
+        {
+            Renderer.material.color = OwnedBy.Colour;
+        }
+        else
+        {
+            Renderer.material.color = Strength > 0 ? DefaultColour : DefaultUnclaimedColour;
+        }
+
+        if(Particle != null)
+        {
+            if (Strength > 0)
+            {
+                Particle.Play();
+            }
+            else
+            {
+                Particle.Stop();
+            }
+        }
     }
 
     public void Init(Vector3Int cell, int strength, int maxStrength)
@@ -65,7 +87,7 @@ public class Base : MonoBehaviour
         Strength += player.Strength;
 
         player.Strength = 0;
-        player.gameObject.SetActive(false); 
+        player.gameObject.SetActive(false);
 
         UpdateBase();
     }
@@ -73,14 +95,14 @@ public class Base : MonoBehaviour
     public void PlayerLeaveBase(Player player, int strengthToLeave)
     {
         // Player keeps control of the city 
-        if(strengthToLeave < Strength)
+        if (strengthToLeave < Strength)
         {
             player.Strength = Strength - strengthToLeave;
             Strength = strengthToLeave;
             OwnedBy = player;
         }
         // Player loses control of the city
-        else if(strengthToLeave >= Strength)
+        else if (strengthToLeave >= Strength)
         {
             player.Strength = Strength;
             Strength = 0;

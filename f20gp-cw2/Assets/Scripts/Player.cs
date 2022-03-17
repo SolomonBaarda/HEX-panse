@@ -38,7 +38,7 @@ public class Player : MonoBehaviour
 
     public void UpdatePlayer()
     {
-        StrengthText.text = $"strength: {Strength}";
+        StrengthText.text = $"health: {Strength}";
     }
 
     public void Init(uint id, string nickname, Color colour, Vector3Int startingCity, int strength)

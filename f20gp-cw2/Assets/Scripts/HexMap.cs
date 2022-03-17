@@ -19,6 +19,9 @@ public class HexMap : MonoBehaviour
     [Header("Object references")]
     public Transform TerrainParent;
     public Material GroundMaterial;
+    public Material NoneMaterial;
+
+
     public GameObject TerrainLayerPrefab;
 
     private void Awake()
@@ -109,8 +112,16 @@ public class HexMap : MonoBehaviour
             g.GetComponent<MeshCollider>().sharedMesh = m;
 
             MeshRenderer r = g.GetComponent<MeshRenderer>();
-            r.material = GroundMaterial;
-            r.material.color = settings.GetBiomeColour(biome);
+            r.material = biome == Biome.None ? NoneMaterial : GroundMaterial;
+
+            Color colour = settings.GetBiomeColour(biome);
+            r.material.color = colour;
+
+            if(biome == Biome.None)
+            {
+                r.material.EnableKeyword("_EMISSION");
+                r.material.SetColor("_EmissionColor", colour);
+            }
         }
     }
 

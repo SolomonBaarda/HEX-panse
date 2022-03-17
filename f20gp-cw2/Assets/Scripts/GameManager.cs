@@ -34,7 +34,11 @@ public class GameManager : MonoBehaviour
 
     public Transform HoverPreviewParent;
     public GameObject ValidMovePrefab;
+    public GameObject ValidMovePrefabAttack;
+
     List<GameObject> AllValidMovePreviews = new List<GameObject>();
+    List<GameObject> AllValidMovePreviewsAttack = new List<GameObject>();
+
 
     [Header("Players")]
     public PlayerSettings PlayerSettings;
@@ -71,16 +75,21 @@ public class GameManager : MonoBehaviour
             Destroy(c.gameObject);
         }
 
-        HexMap.Clear();
-        Players.Clear();
-        Bases.Clear();
-
         foreach (GameObject g in AllValidMovePreviews)
         {
             Destroy(g.gameObject);
         }
 
+        foreach (GameObject g in AllValidMovePreviewsAttack)
+        {
+            Destroy(g.gameObject);
+        }
+
+        HexMap.Clear();
+        Players.Clear();
+        Bases.Clear();
         AllValidMovePreviews.Clear();
+        AllValidMovePreviewsAttack.Clear();
     }
 
     public void StartGame(int seed)
@@ -472,7 +481,7 @@ public class GameManager : MonoBehaviour
                     defendingBase.UpdateBase();
                     player.UpdatePlayer();
 
-                    if(defendingDamage != 0)
+                    if (defendingDamage != 0)
                     {
                         defendingBase.DisplayStrengthChangeText(defendingDamage, turnDuration);
                     }
@@ -688,6 +697,12 @@ public class GameManager : MonoBehaviour
         HoverCellPreview.gameObject.SetActive(IsHoveringOverCell);
     }
 
+    private bool IsAttackingMove(Vector3Int move, Player player)
+    {
+        return Bases.Any(b => b.Cell == move && b.Strength > 0 && b.OwnedBy != player) ||
+            Players.Any(p => p.CurrentCell == move && (p.gameObject.activeSelf || p == player));
+    }
+
     private void UpdateValidMovesHighlight()
     {
         foreach (GameObject g in AllValidMovePreviews)
@@ -699,12 +714,21 @@ public class GameManager : MonoBehaviour
         {
             foreach (Vector3Int move in currentPlayer.ValidMovesThisTurn)
             {
-                GameObject preview = AllValidMovePreviews.Find(x => !x.activeSelf);
+                GameObject prefab = ValidMovePrefab;
+                List<GameObject> previews = AllValidMovePreviews;
+
+                if (IsAttackingMove(move, currentPlayer))
+                {
+                    prefab = ValidMovePrefabAttack;
+                    previews = AllValidMovePreviewsAttack;
+                }
+
+                GameObject preview = previews.Find(x => !x.activeSelf);
 
                 // No disabled previews that we can use
                 if (preview == null)
                 {
-                    preview = Instantiate(ValidMovePrefab, HoverPreviewParent);
+                    preview = Instantiate(prefab, HoverPreviewParent);
                     AllValidMovePreviews.Add(preview);
                 }
 

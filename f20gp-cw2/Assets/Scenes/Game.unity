@@ -3239,6 +3239,7 @@ MonoBehaviour:
   HeightOffset: 1.5
   TerrainParent: {fileID: 1006054790}
   GroundMaterial: {fileID: 2100000, guid: fcb31d72e9f8675459a7d92fd2ef6493, type: 2}
+  NoneMaterial: {fileID: 2100000, guid: 561ab720971a2fd429c080f8e6203c86, type: 2}
   TerrainLayerPrefab: {fileID: 8524249256608546586, guid: fd9bf9f81dbaae347816f5b7a955b256, type: 3}
 --- !u!156049354 &1943052027
 Grid:
@@ -3265,7 +3266,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NumberOfPlayers: 3
-  CurrentTurn: 0
   GameTurn: 0
   MouseLayerMask:
     serializedVersion: 2
@@ -3290,6 +3290,7 @@ MonoBehaviour:
   EnemyBasePrefab: {fileID: 1061491997912404622, guid: 4c6e75fcd639b08499bb9f8fff466592, type: 3}
   HoverPreviewParent: {fileID: 1484178836}
   ValidMovePrefab: {fileID: 8268285654741817012, guid: 5ff5708f77390de42b090d4a382c4fc0, type: 3}
+  ValidMovePrefabAttack: {fileID: 8268285654741817012, guid: 1b938f3837e411f43994c3a224fb5354, type: 3}
   PlayerSettings: {fileID: 11400000, guid: 890026ca80923764e85aad9a85ce56df, type: 2}
 --- !u!1 &2099681500
 GameObject:

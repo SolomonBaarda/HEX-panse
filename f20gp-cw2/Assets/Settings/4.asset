@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Biomes:
   - Biome: 0
-    BiomeColour: {r: 0.9490196, g: 0.32941177, b: 0.1764706, a: 1}
+    BiomeColour: {r: 0.26415092, g: 0.08192417, b: 0.021181917, a: 1}
   - Biome: 4
     BiomeColour: {r: 0.9607843, g: 0.8745098, b: 0.73333335, a: 1}
   - Biome: 1

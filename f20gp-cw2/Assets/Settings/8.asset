@@ -16,9 +16,9 @@ MonoBehaviour:
   - Biome: 0
     BiomeColour: {r: 0, g: 0, b: 0, a: 1}
   - Biome: 4
-    BiomeColour: {r: 0.57254905, g: 0.8627451, b: 0.8980392, a: 1}
+    BiomeColour: {r: 0.4542987, g: 0.74737453, b: 0.7830189, a: 1}
   - Biome: 1
-    BiomeColour: {r: 0.93333334, g: 0.8980392, b: 0.9137255, a: 1}
+    BiomeColour: {r: 0.8050018, g: 0.83053154, b: 0.8490566, a: 1}
   - Biome: 5
     BiomeColour: {r: 0.4862745, g: 0.4862745, b: 0.4862745, a: 1}
   - Biome: 3
