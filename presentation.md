@@ -37,6 +37,12 @@ Small graphical changes:
 * Made the lava material emit light
 
 ## Game Presentation Video
-
+-	Idea behind the game (boardgame – risk esque game) conquering space
+-	inspiration(civ, risk, polytopia); how it works, why is it enjoyable, main USPs
+-	the main board concepts; display the paperprototypes
+-	feedback on idea; go through the concept with people and see if they like it (done)
+-	gloss over rules, mechanics
+-	give reason to buy, sell the idea of fun to play, whats the main thing that will keep people playing
+-	touch on the concepts of expansion ideas for future builds
 ### Design Concepts
 
