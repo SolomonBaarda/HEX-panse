@@ -455,6 +455,12 @@ public class GameManager : MonoBehaviour
                         move();
                         yield return new WaitForSeconds(turnDuration);
                         defendingBase.PlayerCaptureBase(player);
+
+                        // Respawn the player if they were on that tile
+                        if (defendingPlayer != null)
+                        {
+                            TryRespawnPlayer(defendingPlayer);
+                        }
                     }
                     // Other base won won
                     else if (currentBase.Strength == 0)
@@ -501,6 +507,12 @@ public class GameManager : MonoBehaviour
                         move();
                         yield return new WaitForSeconds(turnDuration);
                         defendingBase.PlayerCaptureBase(player);
+
+                        // Respawn the player if they were on that tile
+                        if(defendingPlayer != null)
+                        {
+                            TryRespawnPlayer(defendingPlayer);
+                        }
                     }
                     // City won
                     else if (player.Strength == 0)
@@ -697,15 +709,20 @@ public class GameManager : MonoBehaviour
         HoverCellPreview.gameObject.SetActive(IsHoveringOverCell);
     }
 
-    private bool IsAttackingMove(Vector3Int move, Player player)
+    private bool IsAttackingMove(Vector3Int destination, Player player)
     {
-        return Bases.Any(b => b.Cell == move && b.Strength > 0 && b.OwnedBy != player) ||
-            Players.Any(p => p.CurrentCell == move && (p.gameObject.activeSelf || p == player));
+        return 
+            Bases.Any(b => b.Cell == destination && b.Strength > 0 && (b.OwnedBy == null || b.OwnedBy != player)) || Players.Any(p => p.CurrentCell == destination && p.gameObject.activeSelf && p != player);
     }
 
     private void UpdateValidMovesHighlight()
     {
         foreach (GameObject g in AllValidMovePreviews)
+        {
+            g.SetActive(false);
+        }
+
+        foreach (GameObject g in AllValidMovePreviewsAttack)
         {
             g.SetActive(false);
         }
@@ -729,7 +746,7 @@ public class GameManager : MonoBehaviour
                 if (preview == null)
                 {
                     preview = Instantiate(prefab, HoverPreviewParent);
-                    AllValidMovePreviews.Add(preview);
+                    previews.Add(preview);
                 }
 
                 Vector3 previewPosition = HexMap.Hexagons[move].CentreOfFaceWorld;
